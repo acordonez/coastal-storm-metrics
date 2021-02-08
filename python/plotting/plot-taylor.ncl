@@ -759,10 +759,11 @@ end
 
 begin
 
+ncfile=getenv("NCFILE")
 f = addfile(ncfile,"r")
 
-out_type="pdf"
-out_dir="./fig/taylor/"
+wkdir=getenv("CMEC_WK_DIR")
+out_dir=wkdir+"/fig/taylor/"
 system("mkdir -p "+out_dir)
 
 basinstr=tostring(f@basinstr)

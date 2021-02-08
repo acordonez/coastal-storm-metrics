@@ -1,0 +1,144 @@
+{
+    "fig":{
+        "tables":{
+            "temporal_scorr": {
+                "filename": "",
+                "longname": "",
+                "description": "spearman rank correlation"},
+            "storm_mean": {
+                "filename": "",
+                "longname": "",
+                "description": "storm mean bias"},
+            "climo_mean": {
+                "filename": "",
+                "longname": "",
+                "description": "climatological bias"},
+            "spatial_corr": {
+                "filename": "",
+                "longname": "",
+                "description": "spatial correlation"}
+        },
+        "taylor": {
+            "taylor": {
+                "filename": "",
+                "longname": "",
+                "description": "Taylor diagram"}
+        },
+        "line": {
+            "interann_paceByYear": {
+                "filename": "",
+                "longname": "",
+                "description": "paceByYear interannual cycle"},
+            "interann_aceByYear": {
+                "filename": "",
+                "longname": "",
+                "description": "accumulated cyclone energy interannual cycle"},
+            "interann_tcdByYear": {
+                "filename": "",
+                "longname": "",
+                "description": "tropical cyclone days interannual cycle"},
+            "interann_stormsByYear": {
+                "filename": "",
+                "longname": "",
+                "description": "stormsByYear interannual cycle"},
+            "seasonal_paceByMonth": {
+                "filename": "",
+                "longname": "",
+                "description": "paceByMonth seasonal cycle"},
+            "seasonal_aceByMonth": {
+                "filename": "",
+                "longname": "",
+                "description": "accumulated cyclone energy seasonal cycle"},
+            "seasonal_tcdByMonth": {
+                "filename": "",
+                "longname": "",
+                "description": "tropical cyclone days seasonal cycle"},
+            "seasonal_stormsByMonth": {
+                "filename": "",
+                "longname": "",
+                "description": "storms by month seasonal cycle"}
+        },
+        "spatial": {
+            "pacebias": {
+                "filename": "",
+                "longname": "",
+                "description": ""},
+            "acebias": {
+                "filename": "",
+                "longname": "",
+                "description": "accumulated cyclone energy bias"},
+            "genbias": {
+                "filename": "",
+                "longname": "",
+                "description": "genesis location bias"},
+            "trackbias": {
+                "filename": "",
+                "longname": "",
+                "description": "track bias"},
+            "tcddens": {
+                "filename": "",
+                "longname": "",
+                "description": "tropical cyclone days ..."},
+            "acedens": {
+                "filename": "",
+                "longname": "",
+                "description": "accumulated cyclone energy density"},
+            "pacedens": {
+                "filename": "",
+                "longname": "",
+                "description": ""},
+            "gendens": {
+                "filename": "",
+                "longname": "",
+                "description": "genesis location density"},
+            "maxwind": {
+                "filename": "",
+                "longname": "",
+                "description": "maximum wind speed"},
+            "minpres": {
+                "filename": "",
+                "longname": "",
+                "description": "minimum pressure"},
+            "trackdens": {
+                "filename": "",
+                "longname": "",
+                "description": "track density"}
+        }
+    },
+    "csv-files": {
+        "means": {
+            "climo_mean": {
+                "filename": "",
+                "longname": "",
+                "description": ""}
+        },
+        "metrics": {
+            "storm_mean": {
+                "filename": "",
+                "longname": "",
+                "description": "storm mean bias"},
+            "climo_mean": {
+                "filename": "",
+                "longname": "",
+                "description": "climatological bias"},
+            "temporal_pcorr": {
+                "filename": "",
+                "longname": "",
+                "description": "pearson correlation"},
+            "temporal_scorr": {
+                "filename": "",
+                "longname": "",
+                "description": "spearman rank correlation"},
+            "spatial_corr": {
+                "filename": "",
+                "longname": "",
+                "description": "spatial correlation"}
+        }
+    },
+    "netcdf-files": {
+        "netcdf": {
+                "filename": "",
+                "longname": "",
+                "description": ""}
+    }
+}

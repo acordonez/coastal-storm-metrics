@@ -3,7 +3,7 @@ import netCDF4 as nc
 from datetime import datetime
 import os
 
-def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyears,nmonths,latin,lonin,globaldict):
+def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyears,nmonths,latin,lonin,globaldict,netcdfdir):
     
   # Convert modelsin from pandas to list
   modelsin=modelsin.tolist()
@@ -14,8 +14,8 @@ def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyear
   nlons=lonin.size
   nchar=16
   
-  netcdfdir="./netcdf-files/"
   os.makedirs(os.path.dirname(netcdfdir), exist_ok=True)
+  os.chmod(os.path.dirname(netcdfdir),0o777)
   netcdfile=netcdfdir+"/netcdf_"+globaldict['basinstr']+"_"+os.path.splitext(globaldict['csvfilename'])[0]
   
   # open a netCDF file to write
@@ -82,12 +82,6 @@ def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyear
   
   # close files
   ncout.close()
-  
-
-
-
-
-
 
 def write_dict_csv(vardict,modelsin):
   # create variable array
@@ -101,15 +95,10 @@ def write_dict_csv(vardict,modelsin):
       tmp = np.concatenate((np.expand_dims(modelsin, axis=1), vardict[ii]), axis=1)
     np.savetxt(csvfilename, tmp, delimiter=",", fmt="%s")
 
-
-
-
-
-
-
 def write_single_csv(vardict,modelsin,csvdir,csvname):
   # create variable array
   os.makedirs(os.path.dirname(csvdir), exist_ok=True)
+  os.chmod(os.path.dirname(csvdir),0o777)
   csvfilename = csvdir+"/"+csvname
   
   # If a single line CSV with one model
@@ -146,4 +135,3 @@ def write_single_csv(vardict,modelsin,csvdir,csvname):
   
   # Write header + data array
   np.savetxt(csvfilename, tmp, delimiter=",", fmt="%s", header=headerstr, comments="")
-

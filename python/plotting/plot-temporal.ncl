@@ -1,7 +1,8 @@
+ncfile=getenv("NCFILE")
 f = addfile(ncfile,"r")
 
-out_type="pdf"
-out_dir="./fig/line/"
+wkdir=getenv("CMEC_WK_DIR")
+out_dir=wkdir+"/fig/line/"
 system("mkdir -p "+out_dir)
 
 models = chartostring(f->model_names)
@@ -46,7 +47,7 @@ do mm = 0,dimsizes(linepltvarsstr)-1
   end if
 
   if (DOPLOT) then
-    wks   = gsn_open_wks("pdf",out_dir+"/"+linefilelabstr+"_"+tostring(linepltvarsstr(mm))+"."+basinstr+"_"+filename)
+    wks   = gsn_open_wks(out_type,out_dir+"/"+linefilelabstr+"_"+tostring(linepltvarsstr(mm))+"."+basinstr+"_"+filename)
 
     ; draw xy curves
     res                   = True                      ; plot mods desired

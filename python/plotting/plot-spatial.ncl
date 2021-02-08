@@ -1,7 +1,8 @@
+ncfile=getenv("NCFILE")
 f = addfile(ncfile,"r")
 
-out_type="pdf"
-out_dir="./fig/spatial/"
+wkdir=getenv("CMEC_WK_DIR")
+out_dir=wkdir+"/fig/spatial/"
 system("mkdir -p "+out_dir)
 
 basinstr=tostring(f@basinstr)
@@ -97,6 +98,7 @@ filename = namesplit@fBase
 
     resP=True
     ;resP@txString           = "Annual TC track density, all storms"
+    resP@gsnPanelMainString  = tostring(spapltvarsstr(bb))+"."+basinstr
     resP@amJust           = "TopLeft"
     resP@gsnPanelFigureStringsFontHeightF = 0.015
     resP@gsnPanelFigureStrings=models

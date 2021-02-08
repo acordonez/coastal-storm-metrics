@@ -16,10 +16,11 @@
 ; ncl plot-table.ncl plot_bias=False relative_performance=True invert_stoplight=False calc_deltas=False 'csvfilename="metrics_spatial_corr.csv"'
 begin
 
+ncfile=getenv("NCFILE")
 f = addfile(ncfile,"r")
 
-out_type="pdf"
-out_dir="./fig/tables/"
+wkdir=getenv("CMEC_WK_DIR")
+out_dir=wkdir+"/fig/tables/"
 system("mkdir -p "+out_dir)
   
 basinstr=tostring(f@basinstr)
@@ -66,7 +67,7 @@ end if
   ;relative_performance=False
   ;invert_stoplight=False
   ;calc_deltas=False
-  filepath = "./csv-files/"
+  filepath = wkdir+"/csv-files/"
   csvfilename="metrics_"+basecsvname+"_"+basinstr+"_"+csvtype+".csv"
   filename = filepath+"/"+csvfilename
 

@@ -4,6 +4,8 @@ import numpy as np
 import pandas as pd
 import scipy.stats as sps
 from netCDF4 import Dataset
+import json
+import yaml
 
 sys.path.insert(0, './functions')
 from getTrajectories import *
@@ -13,21 +15,20 @@ from write_spatial import *
 from pattern_cor import *
 
 #----------------------------------------------------------------------------------------
-##### User settings
 
-basin = -1
-csvfilename = 'rean_configs.csv'
-gridsize = 8.0
-styr = 1980
-enyr = 2018
-stmon = 1
-enmon = 12
-truncate_years = False
-THRESHOLD_ACE_WIND = -1.0      # wind speed (in m/s) to threshold ACE. Negative means off.
-THRESHOLD_PACE_PRES = -100.    # slp (in hPa) to threshold PACE. Negative means off.
-do_special_filter_obs = True
-do_fill_missing_pw = True
-do_defineMIbypres = False
+# Get CMEC environment vars
+wk_dir = os.getenv("CMEC_WK_DIR")
+model_dir = os.getenv("CMEC_MODEL_DATA")
+# Get user settings
+user_settings_json = sys.argv[1]
+with open(user_settings_json) as config_file:
+    user_settings = json.load(config_file).get("CyMeP")
+# Get any environment variables in settings
+for setting in user_settings:
+    if isinstance(user_settings[setting], str):
+      user_settings[setting] = os.path.expandvars(user_settings[setting])
+# User settings to global variables
+globals().update(user_settings) # write separate function to set these variables
 
 #----------------------------------------------------------------------------------------
 
@@ -38,7 +39,7 @@ deg2rad = pi / 180.
 
 # Read in configuration file and parse columns for each case
 # Ignore commented lines starting with !
-df=pd.read_csv("./config-lists/"+csvfilename, sep=',', comment='!', header=None)
+df=pd.read_csv(model_dir+"/"+csvfilename, sep=',', comment='!', header=None)
 files = df.loc[ : , 0 ]
 strs = df.loc[ : , 1 ]
 isUnstructStr = df.loc[ : , 2 ]
@@ -89,7 +90,7 @@ for ii in range(len(files)):
   print("-------------------------------------------------------------------------")
   print(files[ii])
 
-  trajfile='trajs/'+files[ii]
+  trajfile=model_dir+"/"+files[ii]
   isUnstruc=isUnstructStr[ii]
   nVars=-1
   headerStr='start'
@@ -467,12 +468,12 @@ for ii in range(nfiles):
   taydict["tay_bias2"][ii] = 100. * ( (aydict['uclim_count'][ii] - aydict['uclim_count'][0]) / aydict['uclim_count'][0] )
 
 # Write out primary stats files
-write_single_csv(rxydict,strs,'./csv-files/','metrics_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_spatial_corr.csv')
-write_single_csv(rsdict,strs,'./csv-files/','metrics_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_temporal_scorr.csv')
-write_single_csv(rpdict,strs,'./csv-files/','metrics_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_temporal_pcorr.csv')
-write_single_csv(aydict,strs,'./csv-files/','metrics_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_climo_mean.csv')
-write_single_csv(asdict,strs,'./csv-files/','metrics_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_storm_mean.csv')
-write_single_csv(stdydict,strs[0],'./csv-files/','means_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_climo_mean.csv')
+write_single_csv(rxydict,strs,wk_dir+'/csv-files/','metrics_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_spatial_corr.csv')
+write_single_csv(rsdict,strs,wk_dir+'/csv-files/','metrics_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_temporal_scorr.csv')
+write_single_csv(rpdict,strs,wk_dir+'/csv-files/','metrics_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_temporal_pcorr.csv')
+write_single_csv(aydict,strs,wk_dir+'/csv-files/','metrics_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_climo_mean.csv')
+write_single_csv(asdict,strs,wk_dir+'/csv-files/','metrics_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_storm_mean.csv')
+write_single_csv(stdydict,strs[0],wk_dir+'/csv-files/','means_'+os.path.splitext(csvfilename)[0]+'_'+basinstr+'_climo_mean.csv')
 
 # Package a series of global package inputs for storage as NetCDF attributes
 globaldict={}
@@ -481,4 +482,5 @@ for x in globaldictvars:
   globaldict[x] = globals()[x]
 
 # Write NetCDF file
-write_spatial_netcdf(msdict,pmdict,pydict,taydict,strs,nyears,nmonths,denslat,denslon,globaldict)
+netcdfdir = wk_dir + "/netcdf-files/"
+write_spatial_netcdf(msdict,pmdict,pydict,taydict,strs,nyears,nmonths,denslat,denslon,globaldict,netcdfdir)

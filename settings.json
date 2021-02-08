@@ -1,0 +1,49 @@
+{
+    "obslist": {
+        "obs_name": "trajectories",
+        "frequency": "",
+        "units": "",
+        "version": "",
+        "description": "TempestExtremes ASCII trajectories"
+    },
+    "info": "",
+    "settings": {
+        "async": "none",
+        "description": "",
+        "driver": "coastal-storm-metrics.sh",
+        "name": "CyMeP",
+        "long_name": "Cyclone Metrics Package",
+        "runtime": {"CyMeP": 0.2, "python3": ["numpy", "pandas", "scipy", "netCDF4"], "ncl": "any"}
+    },
+    "varlist": {
+        "varname": "",
+        "name": "",
+        "frequency": "",
+        "units": ""
+    },
+    "default_parameters": {
+        "basin": -1,
+        "csvfilename": "rean_configs.csv",
+        "gridsize": 8.0,
+        "styr": 1980,
+        "enyr": 2018,
+        "stmon": 1,
+        "enmon": 12,
+        "truncate_years": "False",
+        "THRESHOLD_ACE_WIND": -1.0,
+        "THRESHOLD_PACE_PRES": -100.0,
+        "do_special_filter_obs": "True",
+        "do_fill_missing_pw": "True",
+        "do_defineMIbypres": "False",
+        "trajectory_configs": [
+            "ibtracs-1980-2019-GLOB.v4.txt,OBS,False,1,40,1.0",
+            "trajectories.txt.ERAI,ERAI,False,1,39,1.0",
+            "trajectories.txt.CR20,20CRv3,False,1,36,1.0",
+            "trajectories.txt.MERRA,MERRA,False,1,36,0.85",
+            "trajectories.txt.MERRA2,MERRA2,False,1,39,0.85",
+            "trajectories.txt.JRA,JRA,False,1,39,0.98",
+            "trajectories.txt.CFSR,CFSR,False,1,39,0.883",
+            "trajectories.txt.ERA5,ERA5,False,1,39,1.0"
+        ]
+    }
+}
