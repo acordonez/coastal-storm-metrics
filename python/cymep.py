@@ -19,25 +19,36 @@ from pattern_cor import *
 # Get CMEC environment vars
 wk_dir = os.getenv("CMEC_WK_DIR")
 model_dir = os.getenv("CMEC_MODEL_DATA")
+
 # Get user settings
 user_settings_json = sys.argv[1]
 with open(user_settings_json) as config_file:
     user_settings = json.load(config_file).get("CyMeP")
-# User settings to variables
-basin = user_settings["basin"]
-csvfilename = user_settings["csvfilename"]
-gridsize = user_settings["gridsize"]
-styr = user_settings["styr"]
-enyr = user_settings["enyr"]
-stmon = user_settings["stmon"]
-enmon = user_settings["enmon"]
-truncate_years = user_settings["truncate_years"]
-THRESHOLD_ACE_WIND = user_settings["THRESHOLD_ACE_WIND"]
-THRESHOLD_PACE_PRES = user_settings["THRESHOLD_PACE_PRES"]
-do_special_filter_obs = user_settings["do_special_filter_obs"]
-do_fill_missing_pw = user_settings["do_fill_missing_pw"]
-do_defineMIbypres = user_settings["do_defineMIbypres"]
-print(basin, csvfilename, gridsize, styr, enyr, stmon, enmon, truncate_years,THRESHOLD_ACE_WIND, THRESHOLD_PACE_PRES, do_special_filter_obs, do_fill_missing_pw, do_defineMIbypres)
+
+# Check settings types
+setting_type = {
+"basin": int,
+"csvfilename": str,
+"gridsize": (int,float),
+"styr": int,
+"enyr": int,
+"stmon": int,
+"enmon": int,
+"truncate_years": bool,
+"THRESHOLD_ACE_WIND": (int,float),
+"THRESHOLD_PACE_PRES": (int,float),
+"do_special_filter_obs": bool,
+"do_fill_missing_pw": bool,
+"do_defineMIbypres": bool}
+
+for setting in user_settings:
+  stype = setting_type[setting]
+  if not isinstance(user_settings[setting], stype):
+    raise TypeError("Setting " + setting + " must be of type " + str(stype))
+
+# Set user settings as global variables
+globals().update(user_settings)
+
 #----------------------------------------------------------------------------------------
 
 # Constants

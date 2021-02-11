@@ -29,11 +29,11 @@
         "enyr": 2018,
         "stmon": 1,
         "enmon": 12,
-        "truncate_years": "False",
+        "truncate_years": false,
         "THRESHOLD_ACE_WIND": -1.0,
         "THRESHOLD_PACE_PRES": -100.0,
-        "do_special_filter_obs": "True",
-        "do_fill_missing_pw": "True",
-        "do_defineMIbypres": "False"
+        "do_special_filter_obs": true,
+        "do_fill_missing_pw": true,
+        "do_defineMIbypres": false
     }
 }

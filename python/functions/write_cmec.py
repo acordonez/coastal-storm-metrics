@@ -134,16 +134,24 @@ def populate_filename(data_dict, filename):
             output_dict[key]["filename"] = filename
     return output_dict
 
-def populate_html_metrics(html_lines, met_dict):
-    """Replace metrics flags in with file names as per met_dict."""
+def populate_html_json(html_lines, json_list):
+    """Populate the loaded html template with json file names."""
     for ind, line in enumerate(html_lines):
-        linetemplate = Template(line)
-        html_lines[ind] = linetemplate.substitute(met_dict)
+        if "$json_metric" in line:
+            json_ind = ind
+    linetemplate = Template(html_lines[json_ind])
+    count = 0
+    for json_name in json_list:
+        json_dict = {"json_metric": json_name}
+        if count == 0:
+            html_lines[json_ind] = linetemplate.substitute(json_dict)
+        else:
+            html_lines.insert(json_ind+count, linetemplate.substitute(json_dict))
+        count += 1
     return html_lines
 
 def populate_html_figures(html_lines, fig_dict):
     """Populate the loaded html template with figure file names."""
-    plot_ind = {}
     # Figure out where figure templating starts ($title keyword)
     for ind, line in enumerate(html_lines):
         if "$title" in line:
@@ -186,7 +194,7 @@ if __name__ == "__main__":
     ncfile_name = os.listdir(ncdir)[0] # only 1 nc file for now
     ncfile = xr.open_dataset(ncdir + "/" + ncfile_name)
     model_dict = get_models_dict(ncfile)
-    
+
     yearly_json_name = ncfile_name.replace(".nc", "_year.json")
     monthly_json_name = ncfile_name.replace(".nc", "_month.json")
     taylor_json_name = ncfile_name.replace(".nc", "_taylor.json")
@@ -218,19 +226,19 @@ if __name__ == "__main__":
     dims = json_year["DIMENSIONS"]["dimensions"].copy()
     json_year["DIMENSIONS"]["dimensions"] = create_dims(
         dims, model=model_dict, metric=met_dict, year=year_dict)
-    
+
     # Write json
     year_file_name = json_dir + "/" + yearly_json_name
     with open(year_file_name, "w") as yfile:
         json.dump(json_year, yfile, indent=2)
-    
+
     #----------------------------------------------------------------------------------------
     # Monthly metrics
 
     # Define all the metrics and dimensions
     met_dict = {"pm_count": "count",
                 "pm_tcd": "tropical cyclone days",
-                "pm_ace": "accumulated cyclone energy", 
+                "pm_ace": "accumulated cyclone energy",
                 "pm_pace": "",
                 "pm_lmi": "lifetime maximum intensity"}
     month_dict = {"0": "January",
@@ -258,12 +266,12 @@ if __name__ == "__main__":
     dims = json_month["DIMENSIONS"]["dimensions"].copy()
     json_month["DIMENSIONS"]["dimensions"] = create_dims(
         dims, model=model_dict, metric=met_dict, month=month_dict)
-    
+
     # Write json
     month_file_name = json_dir + "/" + monthly_json_name
     with open(month_file_name, "w") as mfile:
         json.dump(json_month, mfile, indent=2)
-    
+
     #----------------------------------------------------------------------------------------
     # Taylor metrics
 
@@ -281,28 +289,28 @@ if __name__ == "__main__":
     # Populate RESULTS
     metric_list = [*met_dict]
     metric_json_taylor = results_by_time(ncfile, metric_list, by_time=False)
-    
+
     json_taylor = {"DIMENSIONS": {
                     "json_structure": ["model", "metric"], "dimensions": {}}}
     json_taylor.update(metric_json_taylor)
     dims = json_taylor["DIMENSIONS"]["dimensions"].copy()
     json_taylor["DIMENSIONS"]["dimensions"] = create_dims(
         dims, model=model_dict, metric=met_dict)
-    
+
     # write json
     taylor_file_name = json_dir + "/" + taylor_json_name
     with open(taylor_file_name, "w") as tfile:
         # TODO fix nan
         json.dump(json_taylor, tfile, indent=2)
-    
+
     #----------------------------------------------------------------------------------------
     # CSV files
-    # This section converts the metrics stored in 
+    # This section converts the metrics stored in
     # csv files to the CMEC json format.
     csv_abs_dir = os.path.join(output_dir,csvdir)
     csv_list = os.listdir(csv_abs_dir)
     json_structure = ["model", "metric"]
-    
+
     # convert all the csv files in csv-files/
     for csv_file in csv_list:
         cmec_json = {"DIMENSIONS": {"json_structure": json_structure}, "RESULTS": {}}
@@ -362,7 +370,7 @@ if __name__ == "__main__":
     fig_dict = {}
     fig_path = output_dir+"/"+figdir
     fig_files = os.listdir(fig_path)
-    sub_dir_list = [sub_dir for sub_dir in fig_files 
+    sub_dir_list = [sub_dir for sub_dir in fig_files
                     if os.path.isdir(os.path.join(fig_path, sub_dir))]
     for sub_dir in sub_dir_list:
         fig_file_list = os.listdir(os.path.join(fig_path,sub_dir))
@@ -383,12 +391,8 @@ if __name__ == "__main__":
     # Add links to all the output images
     html_lines = populate_html_figures(html_lines, html_list["fig"])
     # Add links to the output metrics jsons
-    html_dict = {
-        "nc_month": monthly_json_name,
-        "nc_year": yearly_json_name,
-        "nc_taylor": taylor_json_name
-        }
-    html_lines = populate_html_metrics(html_lines, html_dict)
+    jsonlist = sorted(os.listdir(output_dir+"/json"))
+    html_lines = populate_html_json(html_lines, jsonlist)
 
     # Write html
     html_path = output_dir + "/index.html"
