@@ -4,20 +4,20 @@ from datetime import datetime
 import os
 
 def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyears,nmonths,latin,lonin,globaldict,netcdfdir):
-    
+
   # Convert modelsin from pandas to list
   modelsin=modelsin.tolist()
-  
+
   # Set up dimensions
   nmodels=len(modelsin)
   nlats=latin.size
   nlons=lonin.size
   nchar=16
-  
+
   os.makedirs(os.path.dirname(netcdfdir), exist_ok=True)
   os.chmod(os.path.dirname(netcdfdir),0o777)
   netcdfile=netcdfdir+"/netcdf_"+globaldict['basinstr']+"_"+os.path.splitext(globaldict['csvfilename'])[0]
-  
+
   # open a netCDF file to write
   ncout = nc.Dataset(netcdfile+".nc", 'w', format='NETCDF4')
 
@@ -59,12 +59,12 @@ def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyear
   for ii in permondict:
     vout = ncout.createVariable(ii, 'f', ('model', 'months'), fill_value=1e+20)
     vout[:] = np.ma.masked_invalid(permondict[ii][:,:])
-    
+
   # create variable array
   for ii in peryrdict:
     vout = ncout.createVariable(ii, 'f', ('model', 'years'), fill_value=1e+20)
     vout[:] = np.ma.masked_invalid(peryrdict[ii][:,:])
-    
+
   # create variable array
   for ii in taydict:
     vout = ncout.createVariable(ii, 'f', ('model'), fill_value=1e+20)
@@ -73,13 +73,13 @@ def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyear
   # Write model names to char
   model_names = ncout.createVariable('model_names', 'c', ('model', 'characters'))
   model_names[:] = nc.stringtochar(np.array(modelsin).astype('S16'))
-  
+
   #today = datetime.today()
   ncout.description = "Coastal metrics processed data"
   ncout.history = "Created " + datetime.today().strftime('%Y-%m-%d-%H:%M:%S')
   for ii in globaldict:
     ncout.setncattr(ii, str(globaldict[ii]))
-  
+
   # close files
   ncout.close()
 
@@ -98,9 +98,8 @@ def write_dict_csv(vardict,modelsin):
 def write_single_csv(vardict,modelsin,csvdir,csvname):
   # create variable array
   os.makedirs(os.path.dirname(csvdir), exist_ok=True)
-  os.chmod(os.path.dirname(csvdir),0o777)
   csvfilename = csvdir+"/"+csvname
-  
+
   # If a single line CSV with one model
   if np.isscalar(modelsin):
     tmp = np.empty((1,len(vardict)))
@@ -110,28 +109,28 @@ def write_single_csv(vardict,modelsin,csvdir,csvname):
       headerstr=headerstr+","+ii
       tmp[0,iterix]=vardict[ii]
       iterix += 1
-    
+
     # Create a dummy numpy string array of "labels" with the control name to append as column #1
     labels = np.empty((1,1),dtype="<U10")
     labels[:] = modelsin
     # Stack labels and numpy dict arrays horizontally as non-header data
     tmp = np.hstack((labels, tmp))
-  
+
   # Else, the more common outcome; 2-D arrays
   else:
     # Concat models to first axis
     firstdict=list(vardict.keys())[0]
     headerstr="Model,"+firstdict
-  
+
     if vardict[firstdict].shape == modelsin.shape:
       tmp = np.concatenate((np.expand_dims(modelsin, axis=1),np.expand_dims(vardict[firstdict], axis=1)), axis=1)
     else:
       tmp = np.concatenate((np.expand_dims(modelsin, axis=1), vardict[firstdict]), axis=1)
-  
+
     for ii in vardict:
       if ii != firstdict:
         tmp = np.concatenate((tmp, np.expand_dims(vardict[ii], axis=1)), axis=1)
         headerstr=headerstr+","+ii
-  
+
   # Write header + data array
   np.savetxt(csvfilename, tmp, delimiter=",", fmt="%s", header=headerstr, comments="")
