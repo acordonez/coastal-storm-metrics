@@ -7,9 +7,9 @@ load "../functions/mask_tc.ncl"
 ;========================================================
 begin
 
-trajdir="../trajs/"
+trajdir="../../python/trajs/"
 ;=================== Get traj data ================================
-filename = "../config-lists/rean_configs.csv"
+filename = "../../python/config-lists/highresmip_configs.csv"
 lines = asciiread(filename,-1,"string")
 delim = ","
 files  =           str_get_field(lines,1,delim)
@@ -30,7 +30,19 @@ do yy = 0,nfiles-1
 ;===========================================================================================
 filebase=files(yy)
 if (str_get_cols(filebase,0,0).ne."!") then
+<<<<<<< HEAD:ncl/landfall/tempest-landfall.ncl
 thefile=trajdir+"/"+filebase
+=======
+
+; some logic to handle leading /
+if (str_get_cols(filebase,0,0).ne."/") then
+  thefile=trajdir+"/"+filebase
+else
+  thefile=filebase
+  filebase=systemfunc("basename "+thefile)
+end if
+print(filebase+"")
+>>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f:ncl/landfall/tempest-landfall.ncl
 
 
 ncols = -1 ; number of columns in non-header rows of trajectory file
@@ -44,7 +56,7 @@ plot_gen=False
 
 maskBasins=True
 basin = 1
-tcMask = mask_tc(0,-999,-999,1.0,360)
+tcMask = mask_tc_allbasin(0,-999,-999,1.0,360)
 
 npossLF=3
 
@@ -59,7 +71,7 @@ traj_data = getTrajectoriesGeneric(thefile,ncols,maxLines,headerDelimStr,delimSt
 
 wind_factor = windcorrs(yy)
 print("corr wind: "+wind_factor)
-  
+
 lon = traj_data(:,2,:)
 lat = traj_data(:,3,:)
 wind = traj_data(:,5,:)*wind_factor
@@ -114,7 +126,7 @@ if (debug) then
 end if
 
 do ii = STIX,ENIX
-  if ( .not.ismissing(interp_lat(ii,1)) .and. \ 
+  if ( .not.ismissing(interp_lat(ii,1)) .and. \
     tcMask({interp_lat(ii,1)},{min((/interp_lon(ii,1),359.0/))}) .eq. basin)
   print("STORM NUMBER: "+ii)
 
@@ -213,7 +225,7 @@ else
   wks  = gsn_open_wks(out_type,"./landfall_img/landfall."+filebase)
 end if
 map = new(1,graphic)
-  
+
 res  = True
 res@gsnDraw    = False
 res@gsnFrame   = False
@@ -224,7 +236,7 @@ res@mpOceanFillColor = "LightBlue1"
 res@mpOutlineOn = True
 res@mpInlandWaterFillColor = res@mpOceanFillColor
 res@mpGreatCircleLinesOn = True
-  
+
 if (plot_gen) then
   res@mpMinLatF             = 3
   res@mpMaxLatF             = 48
@@ -257,7 +269,7 @@ color_NE="PaleGreen"
 color_CE="LightBlue"
 res@mpFillAreaSpecifiers = (/"Texas","Oklahoma","Kansas", \
   "Florida","Alabama","Louisiana","Mississippi","Georgia","South Carolina","North Carolina","Virginia","Georgia","Tennessee","Arkansas","Kentucky", \
-  "New York","New Jersey","Connecticut","Massachusetts","Maine","New Hampshire","Rhode Island","Vermont","Pennsylvania","Maryland","Delaware","West Virginia"/) 
+  "New York","New Jersey","Connecticut","Massachusetts","Maine","New Hampshire","Rhode Island","Vermont","Pennsylvania","Maryland","Delaware","West Virginia"/)
 res@mpSpecifiedFillColors = (/color_CE,color_CE,color_CE, \
   color_SE,color_SE,color_SE,color_SE,color_SE,color_SE,color_SE,color_SE,color_SE,color_SE,color_SE,color_SE, \
   color_NE,color_NE,color_NE,color_NE,color_NE,color_NE,color_NE,color_NE,color_NE,color_NE,color_NE,color_NE/)
@@ -265,11 +277,11 @@ res@mpFillAreaSpecifiers = "Conterminous US:"+res@mpFillAreaSpecifiers
 map = gsn_csm_map_ce(wks,res)
 
 gsn_define_colormap(wks,"rainbow+white+gray")
-  polyres               = True          ; poly marker mods desired 
+  polyres               = True          ; poly marker mods desired
   polyres@tfPolyDrawOrder = "PostDraw"
   polyres@gsMarkerIndex = 1            ; choose circle as polymarker
   lineres = True
-  
+
 dum = new((/npossLF,nstorms/),graphic)
 dum1 = dum
 dum2 = dum
@@ -321,7 +333,7 @@ if (.not.ismissing(thisWind) .and. thisWind .gt. windThresh)
 ;    lineres@gsLineColor = (/"darkorange3"/)
 ;    lineres@gsLineThicknessF  = linethicknesses(4)
 ;  else
-;    polyres@gsMarkerColor = (/"red"/) 
+;    polyres@gsMarkerColor = (/"red"/)
 ;    lineres@gsLineColor = (/"red"/)
 ;    lineres@gsLineThicknessF  = linethicknesses(5)
 ;  end if
@@ -341,26 +353,26 @@ if (.not.ismissing(thisWind) .and. thisWind .gt. windThresh)
     polyres@gsMarkerColor = (/"green"/)
     lineres@gsLineColor = (/"green"/)
   else
-    polyres@gsMarkerColor = (/"white"/) 
+    polyres@gsMarkerColor = (/"white"/)
     lineres@gsLineColor = (/"white"/)
   end if
   end if
   end if
-  
-  txres               = True                            
+
+  txres               = True
   txres@txFontHeightF = 0.01             ; Set the font height
- 
+
   polyresback=polyres
   polyresback@gsMarkerSizeF=0.07
-  polyresback@gsMarkerColor="black" 
+  polyresback@gsMarkerColor="black"
 
   ;if (landfall_region(i,j) .eq. 3) then
     if (plot_gen) then
       dum2(i,j) = gsn_add_polymarker(wks,map,genLon,genLat,polyresback)
-      dum3(i,j) = gsn_add_polymarker(wks,map,genLon,genLat,polyres)  
+      dum3(i,j) = gsn_add_polymarker(wks,map,genLon,genLat,polyres)
     else
       dum1(i,j) = gsn_add_polymarker(wks,map,thisLon,thisLat,polyresback)
-      dum(i,j) = gsn_add_polymarker(wks,map,thisLon,thisLat,polyres) 
+      dum(i,j) = gsn_add_polymarker(wks,map,thisLon,thisLat,polyres)
     end if
   ;end if
 
@@ -372,13 +384,13 @@ if (.not.ismissing(thisWind) .and. thisWind .gt. windThresh)
   ;text(i,j) = gsn_add_text(wks,map,str,thisLon+0.5,thisLat-0.5,txres)
 
   system("echo "+quote+   thisLon+delim+thisLat+delim+thisWind+delim+genLon+delim+genLat+delim+landfall_region(i,j)   +quote+" >> "+txtfilename)
-  
- 
+
+
 end if
 
 end do
 end do
-  
+
 print("Drawing plot")
 
 draw(map)
