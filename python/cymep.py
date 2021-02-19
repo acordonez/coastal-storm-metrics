@@ -5,9 +5,9 @@ import pandas as pd
 import scipy.stats as sps
 from netCDF4 import Dataset
 import json
-import yaml
 
 sys.path.insert(0, './functions')
+from getSettings import *
 from getTrajectories import *
 from mask_tc import *
 from track_density import *
@@ -15,39 +15,46 @@ from write_spatial import *
 from pattern_cor import *
 
 #----------------------------------------------------------------------------------------
+##### User Settings
+
+basin = 1
+csvfilename = 'ts_config_rean.csv'
+gridsize = 8.0
+styr = 1980
+enyr = 2020
+stmon = 1
+enmon = 12
+truncate_years = False
+THRESHOLD_ACE_WIND = -1.0      # wind speed (in m/s) to threshold ACE. Negative means off.
+THRESHOLD_PACE_PRES = -100.    # slp (in hPa) to threshold PACE. Negative means off.
+do_special_filter_obs = True   # Special "if" block for first line (control)
+do_fill_missing_pw = True
+do_defineMIbypres = False
+
+# IO settings (do not change)
+wk_dir = '.'
+model_dir = 'trajs'
+csv_dir = 'config-lists'
+
+## CMEC driver
+
+# If package is being run via cmec-driver, the following code section
+# will override the above user settings with information from the CMEC
+# environment variables and settings JSON.
 
 # Get CMEC environment vars
-wk_dir = os.getenv("CMEC_WK_DIR")
-model_dir = os.getenv("CMEC_MODEL_DATA")
+if os.getenv("CMEC_WK_DIR") is not None:
+  wk_dir = os.getenv("CMEC_WK_DIR")
+if os.getenv("CMEC_MODEL_DATA") is not None:
+  model_dir = os.getenv("CMEC_MODEL_DATA")
+  csv_dir = model_dir
 
-# Get user settings
-user_settings_json = sys.argv[1]
-with open(user_settings_json) as config_file:
-    user_settings = json.load(config_file).get("CyMeP")
-
-# Check settings types
-setting_type = {
-"basin": int,
-"csvfilename": str,
-"gridsize": (int,float),
-"styr": int,
-"enyr": int,
-"stmon": int,
-"enmon": int,
-"truncate_years": bool,
-"THRESHOLD_ACE_WIND": (int,float),
-"THRESHOLD_PACE_PRES": (int,float),
-"do_special_filter_obs": bool,
-"do_fill_missing_pw": bool,
-"do_defineMIbypres": bool}
-
-for setting in user_settings:
-  stype = setting_type[setting]
-  if not isinstance(user_settings[setting], stype):
-    raise TypeError("Setting " + setting + " must be of type " + str(stype))
-
-# Set user settings as global variables
-globals().update(user_settings)
+# If json filename provided, load those settings
+if (len(sys.argv) > 1):
+  user_settings_json = sys.argv[1]
+  user_settings = load_settings_from_json(user_settings_json)
+  # Set user settings as global variables
+  globals().update(user_settings)
 
 #----------------------------------------------------------------------------------------
 
@@ -58,7 +65,7 @@ deg2rad = pi / 180.
 
 # Read in configuration file and parse columns for each case
 # Ignore commented lines starting with !
-df=pd.read_csv(model_dir+"/"+csvfilename, sep=',', comment='!', header=None)
+df=pd.read_csv(csv_dir+"/"+csvfilename, sep=',', comment='!', header=None)
 files = df.loc[ : , 0 ]
 strs = df.loc[ : , 1 ]
 isUnstructStr = df.loc[ : , 2 ]
@@ -126,7 +133,7 @@ for ii in range(len(files)):
 
   # Extract trajectories from tempest file and assign to arrays
   # USER_MODIFY
-  nstorms, ntimes, yrs, traj_data = getTrajectories(trajfile,nVars,headerStr,isUnstruc)
+  nstorms, ntimes, traj_data = getTrajectories(trajfile,nVars,headerStr,isUnstruc)
   xlon   = traj_data[2,:,:]
   xlat   = traj_data[3,:,:]
   xpres  = traj_data[4,:,:]/100.
