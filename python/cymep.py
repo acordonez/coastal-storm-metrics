@@ -126,7 +126,7 @@ for ii in range(len(files)):
 
   # Extract trajectories from tempest file and assign to arrays
   # USER_MODIFY
-  nstorms, ntimes, traj_data = getTrajectories(trajfile,nVars,headerStr,isUnstruc)
+  nstorms, ntimes, yrs, traj_data = getTrajectories(trajfile,nVars,headerStr,isUnstruc)
   xlon   = traj_data[2,:,:]
   xlat   = traj_data[3,:,:]
   xpres  = traj_data[4,:,:]/100.

@@ -36,10 +36,9 @@ def model_dict_from_csv(fname):
         for row in csvreader:
             tmp = remove_key(row, "Model")
             for item in tmp:
+                tmp[item] = float(tmp[item])
                 if np.isnan(tmp[item]):
                     tmp[item] = None
-                else:
-                    tmp[item] = float(tmp[item])
             model_dict.update({row["Model"]: tmp})
     return model_dict
 
