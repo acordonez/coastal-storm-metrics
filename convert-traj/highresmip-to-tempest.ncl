@@ -3,7 +3,7 @@ begin
 DURTHRESH=0
 print_names=False
 print_to_screen=False
-gridfile=""
+;gridfile=""
 
 ;fname  = "~/Desktop/TC-NH_TRACK_CNRM-CM6-1-HR_highresSST-present_r1i1p1f2_gr_19500101-20141231.nc"
 f = addfile(fname,"r")
@@ -110,7 +110,7 @@ do ii = 0,ibstormcount-1
   ;if (toint(ibbasin(ii,0)) .eq. 0 .or. toint(ibbasin(ii,0)) .eq. 12 .or. toint(ibbasin(ii,0)) .eq. 13) then
   ;if (toint(ibbasin(ii,0)) .eq. 0 ) then
     numentries=num(.not.ismissing(iblat(ii,:)) .and. ibflag(ii,:) .eq. 1)
-    
+
     ;if (.not.ismissing(ibname(ii,0))) then
     if (numentries .gt. DURTHRESH .and. sum(ibflag(ii,:)) .gt. 0) then
 
@@ -161,8 +161,13 @@ do ii = 0,ibstormcount-1
           if (gridfile .ne. "") then
             if (.not. isdefined("gridlat")) then
               gridf=addfile(gridfile,"r")
+<<<<<<< HEAD
               gridlat=gridf->latitude
               gridlon=gridf->longitude
+=======
+              gridlat=gridf->lat
+              gridlon=gridf->lon
+>>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f
             end if
             thisLat=minind(abs(gridlat-iblat(ii,jj)))
             thisLon=minind(abs(gridlon-iblon(ii,jj)))
@@ -170,7 +175,7 @@ do ii = 0,ibstormcount-1
             thisLat=-999
             thisLon=-999
           end if
-          
+
           ;print(iblat(ii,jj)+" "+iblon(ii,jj))
           if (iblon(ii,jj) .le. max(PHIS&lon) .and. iblon(ii,jj) .ge. min(PHIS&lon)) then
             thisPHIS=tofloat(PHIS({iblat(ii,jj)},{iblon(ii,jj)}))
@@ -180,9 +185,18 @@ do ii = 0,ibstormcount-1
 
           ; There is a potential bug here, where either the calendar converts to missing
           ; or it converts such that the hour is off by one
+<<<<<<< HEAD
           thisdate=cd_calendar(ibtime(ii,jj),0)
           if (any(ismissing(thisdate))) then
             print("MISSING! "+ibtime(ii,jj)+" at "+ii+" "+jj)
+=======
+
+          ; this should be cd_calendar, but we get errors. trying ut_calendar_fix
+          thisdate=ut_calendar_fix(ibtime(ii,jj),0)
+          if (any(ismissing(thisdate))) then
+            print("MISSING! "+ibtime(ii,jj)+" at "+ii+" "+jj)
+            exit
+>>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f
             totalerrors=totalerrors+1
           else if (mod(thisdate(0,3),6) .ne. 0) then
             print("ERROR! "+ibtime(ii,jj)+" at "+ii+" "+jj+"    thinks hour equal "+thisdate(0,3))
@@ -207,6 +221,6 @@ do ii = 0,ibstormcount-1
   ;end if
 end do
 end
-  
+
 print("Total errors! "+totalerrors)
-	;13056	41.470669	-19.662915	9.957811e+04	1.960049e+01	1979	1	16	12	
+	;13056	41.470669	-19.662915	9.957811e+04	1.960049e+01	1979	1	16	12

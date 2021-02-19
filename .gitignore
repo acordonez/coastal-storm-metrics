@@ -1,3 +1,5 @@
+*connect*.dat
+dev/
 python/trajs/hiresmip
 seeds.txt.*
 netcdf_*nc
@@ -45,6 +47,10 @@ out.*
 slice-*nc
 *timesArray_*
 projects/ke/*.nc
+<<<<<<< HEAD
+=======
+!jamc-paper.tar.gz
+>>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f
 !rean_configs.csv
 !ibtracs-1980-2019-GLOB.v4.txt
 !trajectories.txt.CFSR
