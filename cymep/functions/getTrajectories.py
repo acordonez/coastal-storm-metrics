@@ -22,7 +22,7 @@ def getTrajectories(filename,nVars,headerDelimStr,isUnstruc):
       # if not a header line, and nVars = -1, find number of columns in data point
       if nVars < 0:
         nVars=len(line.split())
-  
+
   maxNumPts = max(numPts) # Maximum length of ANY trajectory
 
   print("Found %d columns" % nVars)
@@ -56,8 +56,17 @@ def getTrajectories(filename,nVars,headerDelimStr,isUnstruc):
   print("... done reading data")
   return numtraj, maxNumPts, prodata
 
-
-
+def getModelYears(filename,headerDelimStr):
+  # Using the newer with construct to close the file automatically.
+  with open(filename) as f:
+      data = f.readlines()
+  # Create empty set for year tracking
+  years = set()
+  for line in data:
+    if headerDelimStr in line:  # check if header string is satisfied
+      years.add(line.split[2])
+  yearRange = (min(years), max(years))
+  return yearRange
 
 def getNodes(filename,nVars,isUnstruc):
   print("Getting nodes from TempestExtremes file...")
@@ -79,7 +88,7 @@ def getNodes(filename,nVars,isUnstruc):
       # if not a header line, and nVars = -1, find number of columns in data point
       if nVars < 0:
         nVars=len(line.split())
-  
+
   maxNumPts = max(numPts) # Maximum length of ANY trajectory
 
   print("Found %d columns" % nVars)
