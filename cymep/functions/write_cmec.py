@@ -18,12 +18,12 @@ import numpy as np
 import xarray as xr
 
 # Some important variables
-version = 0.2
 ncdir = "netcdf-files"
 csvdir = "csv-files"
 figdir = "fig"
 
 def remove_key(d, key):
+    """Returns dictionary without selected key."""
     new_dict = d.copy()
     new_dict.pop(key)
     return new_dict
@@ -41,6 +41,15 @@ def model_dict_from_csv(fname):
                     tmp[item] = None
             model_dict.update({row["Model"]: tmp})
     return model_dict
+
+def set_metric_definitions(metric_list, desc):
+    """Populates metrics definitions using template."""
+    metric_dict = {}
+    for metric in metric_list:
+        pre,suf = metric.split('_')
+        metric_desc = desc["prefix"][pre] + desc["suffix"][suf]
+        metric_dict[metric] = metric_desc
+    return metric_dict
 
 def results_by_time(ncfile, metric_list, by_time=False):
     """Build results json from xarray input.
@@ -118,6 +127,7 @@ def get_env():
     import pandas
     import scipy
     import netCDF4
+    import subprocess
 
     versions = {}
     versions['netCDF4'] = netCDF4.__version__
@@ -125,6 +135,8 @@ def get_env():
     versions['numpy'] = np.__version__
     versions['pandas'] = pandas.__version__
     versions['scipy'] = scipy.__version__
+    ncl = subprocess.check_output(['ncl', '-V']).decode("utf-8").rstrip()
+    versions['ncl'] = ncl
     return versions
 
 def populate_filename(data_dict, filename):
@@ -132,7 +144,7 @@ def populate_filename(data_dict, filename):
     output_dict = {}
     for key in data_dict:
         if key in filename:
-            output_dict[key] = data_dict[key]
+            output_dict[key] = data_dict[key].copy()
             output_dict[key]["filename"] = filename
     return output_dict
 
@@ -141,7 +153,10 @@ def populate_html_json(html_lines, json_list):
     for ind, line in enumerate(html_lines):
         if "$json_metric" in line:
             json_ind = ind
+    # Create template line
     linetemplate = Template(html_lines[json_ind])
+    # Replace template line with actual html for each
+    # file, making sure to overwrite the original template
     count = 0
     for json_name in json_list:
         json_dict = {"json_metric": json_name}
@@ -158,7 +173,7 @@ def populate_html_figures(html_lines, fig_dict):
     for ind, line in enumerate(html_lines):
         if "$title" in line:
             title_ind = ind
-    # Create templates
+    # Create template lines
     titletemplate = Template(html_lines[title_ind])
     linetemplate = Template(html_lines[title_ind+1])
     # Replace template lines with actual html for each figure
@@ -187,19 +202,43 @@ def populate_html_figures(html_lines, fig_dict):
 
 if __name__ == "__main__":
     output_dir = os.getenv("CMEC_WK_DIR")
-    ncdir = output_dir + "/netcdf-files"
+    ncpath = os.path.join(output_dir,ncdir)
+
+    # Descriptions for all the different file names
+    with open("functions/output_templates/output_desc.json") as description_file:
+        data_desc = json.load(description_file)
 
     #----------------------------------------------------------------------------------------
     # NETCDF
     # This first section converts the different metrics in the netCDF output
     # to individual json files - yearly, monthly, and taylor metrics.
-    ncfile_name = os.listdir(ncdir)[0] # only 1 nc file for now
-    ncfile = xr.open_dataset(ncdir + "/" + ncfile_name)
+    ncfile_name = os.listdir(ncpath)[0] # only 1 nc file for now
+    ncfilepath = os.path.join(ncpath,ncfile_name)
+    ncfile = xr.open_dataset(ncfilepath)
     model_dict = get_models_dict(ncfile)
 
     yearly_json_name = ncfile_name.replace(".nc", "_year.json")
     monthly_json_name = ncfile_name.replace(".nc", "_month.json")
     taylor_json_name = ncfile_name.replace(".nc", "_taylor.json")
+
+    # Create a descriptive dictionary of these new json files
+    # for output.json since these are not described in output_desc.json
+    netcdf_desc = {yearly_json_name: {
+                                        "filename": "",
+                                        "longname": "yearly cyclone metrics",
+                                        "description": "yearly cyclone metrics converted from netcdf"
+                   },
+                   monthly_json_name: {
+                                        "filename": "",
+                                        "longname": "monthly cyclone metrics",
+                                        "description": "monthly cyclone metrics converted from netcdf"
+                   },
+                   taylor_json_name: {
+                                        "filename": "",
+                                        "longname": "Taylor cyclone metrics",
+                                        "description": "Taylor cyclone metrics converted from netcdf"
+                   }
+    }
 
     json_dir = output_dir + "/json"
     os.mkdir(json_dir)
@@ -207,17 +246,11 @@ if __name__ == "__main__":
     # Yearly metrics conversion
 
     # Define all the metrics and dimensions
-    met_dict = {
-                "py_count": "count",
-                "py_tcd": "tropical cyclone days",
-                "py_ace": "accumulated cyclone energy",
-                "py_pace": "",
-                "py_latgen": "",
-                "py_lmi": "lifetime maximum intensity"}
+    metric_list = ["py_count", "py_tcd", "py_ace", "py_pace", "py_latgen", "py_lmi"]
+    met_dict = set_metric_definitions(metric_list, data_desc["statistics"])
     year_list = [y for y in range(int(ncfile.attrs["styr"]), int(ncfile.attrs["enyr"])+1)]
 
     # Populate RESULTS
-    metric_list = ["py_count", "py_tcd", "py_ace", "py_pace", "py_latgen", "py_lmi"]
     metric_json_year = results_by_time(ncfile, metric_list, by_time=True)
 
     # Create other json fields
@@ -238,11 +271,8 @@ if __name__ == "__main__":
     # Monthly metrics
 
     # Define all the metrics and dimensions
-    met_dict = {"pm_count": "count",
-                "pm_tcd": "tropical cyclone days",
-                "pm_ace": "accumulated cyclone energy",
-                "pm_pace": "",
-                "pm_lmi": "lifetime maximum intensity"}
+    metric_list = ["pm_count", "pm_tcd", "pm_ace", "pm_pace", "pm_lmi"]
+    met_dict = set_metric_definitions(metric_list, data_desc["statistics"])
     month_dict = {"0": "January",
                   "1": "February",
                   "2": "March",
@@ -257,14 +287,12 @@ if __name__ == "__main__":
                   "11": "December"}
 
     # Populate RESULTS
-    metric_list = ["pm_count", "pm_tcd", "pm_ace", "pm_pace", "pm_lmi"]
     metric_json_month = results_by_time(ncfile, metric_list, by_time=True)
 
     # Create other json fields
     json_month = {"DIMENSIONS": {
                   "json_structure": ["model", "metric", "month"], "dimensions": {}}}
     json_month.update(metric_json_month)
-
     dims = json_month["DIMENSIONS"]["dimensions"].copy()
     json_month["DIMENSIONS"]["dimensions"] = create_dims(
         dims, model=model_dict, metric=met_dict, month=month_dict)
@@ -277,19 +305,11 @@ if __name__ == "__main__":
     #----------------------------------------------------------------------------------------
     # Taylor metrics
 
-    # Define all the metrics
-    met_dict = {"tay_pc": "Pattern Correlation",
-                "tay_ratio": "",
-                "tay_bias": "Bias",
-                "tay_xmean": "Test variable weighted areal average",
-                "tay_ymean": "Reference variable weighted areal average",
-                "tay_xvar": "Test variable weighted areal variance",
-                "tay_yvar": "Reference variable weighted areal variance",
-                "tay_rmse": "Root mean square error",
-                "tay_bias2": "Relative bias"}
+    # Define all metrics and dimensions
+    metric_list = ["tay_pc", "tay_ratio", "tay_bias", "tay_xmean", "tay_ymean", "tay_xvar", "tay_yvar", "tay_rmse", "tay_bias2"]
+    met_dict = set_metric_definitions(metric_list, data_desc["statistics"])
 
     # Populate RESULTS
-    metric_list = [*met_dict]
     metric_json_taylor = results_by_time(ncfile, metric_list, by_time=False)
 
     json_taylor = {"DIMENSIONS": {
@@ -313,11 +333,13 @@ if __name__ == "__main__":
     csv_list = os.listdir(csv_abs_dir)
     json_structure = ["model", "metric"]
 
-    # convert all the csv files in csv-files/
+    # convert all the csv files in csv-files/ to json
     for csv_file in csv_list:
         cmec_json = {"DIMENSIONS": {"json_structure": json_structure}, "RESULTS": {}}
         result = model_dict_from_csv(os.path.join(csv_abs_dir,csv_file))
         dimensions = get_dimensions(result.copy(), json_structure)
+        metric_list = [key for key in dimensions["metric"]]
+        dimensions["metric"] = set_metric_definitions(metric_list, data_desc["statistics"])
         cmec_json["DIMENSIONS"]["dimensions"] = dimensions
         cmec_json["RESULTS"] = result
         cmec_file_name = csv_file.replace(".csv", ".json")
@@ -330,22 +352,17 @@ if __name__ == "__main__":
     # (which has metadata about the output files) and the index.html
     # page that displays the results.
     test_path = os.getenv('CMEC_MODEL_DATA')
+    obs_path = os.getenv('CMEC_OBS_DATA')
     log_path = output_dir + "/CyMeP.log.txt"
-    out_json = {
-                'index': 'index',
+    out_json = {'index': 'index',
                 'provenance': {},
                 'plots': {},
                 'html': "index.html",
                 'metrics': {}}
-    out_json["provenance"] = {
-        "environment": get_env(),
-        "modeldata": test_path,
-        "log": log_path,
-        "version": version}
-
-    # Descriptions for all the different file names
-    with open("functions/output_templates/output_desc.json") as description_file:
-        data_desc = json.load(description_file)
+    out_json["provenance"] = {"environment": get_env(),
+                "modeldata": test_path,
+                "obsdata": obs_path,
+                "log": log_path}
 
     # Store filenames for writing html later
     html_list = {"fig": {}, "csv": [], "netcdf": ""}
@@ -353,7 +370,7 @@ if __name__ == "__main__":
     # Populate netCDF metrics details
     metrics_dict = {"netcdf": {}}
     metrics_dict["netcdf"]["description"] = ncfile.attrs["description"]
-    metrics_dict["netcdf"]["filename"] = os.path.relpath(os.path.join(ncdir,ncfile_name))
+    metrics_dict["netcdf"]["filename"] = os.path.join(ncdir,ncfile_name)
     metrics_dict["netcdf"]["longname"] = data_desc["netcdf-files"]["netcdf"]["longname"]
     html_list["netcdf"] = ncfile_name
 
@@ -365,8 +382,28 @@ if __name__ == "__main__":
         elif "mean" in csvfilename:
             tmp = populate_filename(data_desc["csv-files"]["means"], csvfilename)
         metrics_dict.update(tmp)
-    out_json["metrics"] = metrics_dict
     html_list["csv"] = csv_list
+
+    # Populate json metrics details
+    json_list = os.listdir(json_dir)
+    for jfile in os.listdir(json_dir):
+        jsonfilename = os.path.join("json", jfile)
+        # Get json metadata from corresponding csv or netcdf metadata
+        if "metrics" in jsonfilename:
+            tmp = populate_filename(data_desc["csv-files"]["metrics"], jsonfilename)
+            # change short name so we don't overwrite the csv file entries in metrics_dict
+            key = list(tmp.keys())[0]
+            key_new = key + " json"
+            tmp[key_new] = tmp.pop(key)
+        elif "mean" in jsonfilename:
+            tmp = populate_filename(data_desc["csv-files"]["means"], jsonfilename)
+            # change short name so we don't overwrite the csv file entries in metrics_dict
+            key = list(tmp.keys())[0]
+            key_new = key + " json"
+            tmp[key_new] = tmp.pop(key)
+        elif jfile in netcdf_desc:
+            tmp = populate_filename(netcdf_desc, jsonfilename)
+        metrics_dict.update(tmp)
 
     # Get figure filenames organized by subfolder
     fig_dict = {}
@@ -381,6 +418,9 @@ if __name__ == "__main__":
             fig_file = os.path.join(figdir,sub_dir,fig_file)
             tmp = populate_filename(data_desc["fig"][sub_dir], fig_file)
             fig_dict.update(tmp)
+
+    # Add metrics and figures to output.json
+    out_json["metrics"] = metrics_dict
     out_json["plots"] = fig_dict
 
     # Write output.json
