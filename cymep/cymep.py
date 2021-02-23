@@ -49,9 +49,9 @@ if os.getenv("CMEC_MODEL_DATA") is not None:
   model_dir = os.getenv("CMEC_MODEL_DATA")
   csv_dir = model_dir
 
-# If json filename provided, load those settings
-if (len(sys.argv) > 1):
-  user_settings_json = sys.argv[1]
+# If using config json, load those settings
+if os.getenv("CMEC_CONFIG_DIR") is not None:
+  user_settings_json = os.path.join(os.getenv("CMEC_CONFIG_DIR"),"cmec.json")
   user_settings = load_settings_from_json(user_settings_json)
   # Set user settings as global variables
   globals().update(user_settings)

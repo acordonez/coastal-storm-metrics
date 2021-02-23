@@ -1,8 +1,9 @@
 #!/bin/bash
+# This is the driver script for running CyMeP via cmec-driver
 
 echo "Running Cyclone Metrics Package"
-cd ${CMEC_CODE_DIR}/python
-python cymep.py ${CMEC_CONFIG_DIR}/cmec.json > ${CMEC_WK_DIR}/CyMeP.log.txt
+cd ${CMEC_CODE_DIR}/cymep
+python cymep.py > ${CMEC_WK_DIR}/CyMeP.log.txt
 
 if [[ $? = 0 ]]; then
     echo "Success in Cyclone Metrics Package"
