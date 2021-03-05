@@ -5,6 +5,13 @@ This script generates module output data based on the CMEC convention.
 
 NetCDF and CSV outputs are converted to CMEC compliant jsons. A descriptive
 output.json file is generated along with an html landing page (index.html).
+All of the output files (netcdf, csv, json, and figures) are described in
+output.json.
+
+If a new output file is being added to the CyMeP package, information
+will need to be added to the description template
+(cymep/functions/output_templates/output_desc.json) so the file is included
+in output.json.
 
 The CMEC environment variables $CMEC_MODEL_DIR and $CMEC_WK_DIR must be set to run
 this script successfully.
@@ -212,6 +219,8 @@ if __name__ == "__main__":
     # NETCDF
     # This first section converts the different metrics in the netCDF output
     # to individual json files - yearly, monthly, and taylor metrics.
+    # If new netcdf outputs are added, this section will need to be
+    # modified.
     ncfile_name = os.listdir(ncpath)[0] # only 1 nc file for now
     ncfilepath = os.path.join(ncpath,ncfile_name)
     ncfile = xr.open_dataset(ncfilepath)
@@ -243,7 +252,7 @@ if __name__ == "__main__":
     json_dir = output_dir + "/json"
     os.mkdir(json_dir)
     #----------------------------------------------------------------------------------------
-    # Yearly metrics conversion
+    # NetCDF: Yearly metrics conversion
 
     # Define all the metrics and dimensions
     metric_list = ["py_count", "py_tcd", "py_ace", "py_pace", "py_latgen", "py_lmi"]
@@ -268,7 +277,7 @@ if __name__ == "__main__":
         json.dump(json_year, yfile, indent=2)
 
     #----------------------------------------------------------------------------------------
-    # Monthly metrics
+    # NetCDF: Monthly metrics
 
     # Define all the metrics and dimensions
     metric_list = ["pm_count", "pm_tcd", "pm_ace", "pm_pace", "pm_lmi"]
@@ -303,7 +312,7 @@ if __name__ == "__main__":
         json.dump(json_month, mfile, indent=2)
 
     #----------------------------------------------------------------------------------------
-    # Taylor metrics
+    # NetCDF: Taylor metrics
 
     # Define all metrics and dimensions
     metric_list = ["tay_pc", "tay_ratio", "tay_bias", "tay_xmean", "tay_ymean", "tay_xvar", "tay_yvar", "tay_rmse", "tay_bias2"]
