@@ -107,8 +107,7 @@
     },
     "netcdf-files": {
         "netcdf": {
-                "longname": "netcdf output",
-                "description": "Time series, seasonal cycle, and taylor diagram statistics"}
+                "longname": "netcdf output"}
     },
     "statistics":{
         "prefix": {

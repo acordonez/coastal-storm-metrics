@@ -376,13 +376,15 @@ if __name__ == "__main__":
     # Store filenames for writing html later
     html_list = {"fig": {}, "csv": [], "netcdf": ""}
 
-    # Populate netCDF metrics details
-    metrics_dict = {"netcdf": {}}
-    metrics_dict["netcdf"]["description"] = ncfile.attrs["description"]
-    metrics_dict["netcdf"]["filename"] = os.path.join(ncdir,ncfile_name)
-    metrics_dict["netcdf"]["longname"] = data_desc["netcdf-files"]["netcdf"]["longname"]
+    # Populate netCDF data details
+    data_dict = {"netcdf": {}}
+    region = ncfile.attrs["basinstr"]
+    data_dict["netcdf"]["description"] = ncfile.attrs["description"]
+    data_dict["netcdf"]["filename"] = os.path.join(ncdir,ncfile_name)
+    data_dict["netcdf"]["longname"] = region + " " + data_desc["netcdf-files"]["netcdf"]["longname"]
     html_list["netcdf"] = ncfile_name
 
+    metrics_dict = {}
     # Populate csv metrics details
     for csvfilename in csv_list:
         csvfilename = os.path.join(csvdir,csvfilename)
@@ -429,6 +431,7 @@ if __name__ == "__main__":
             fig_dict.update(tmp)
 
     # Add metrics and figures to output.json
+    out_json["data"] = data_dict
     out_json["metrics"] = metrics_dict
     out_json["plots"] = fig_dict
 
