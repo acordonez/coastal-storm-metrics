@@ -134,12 +134,16 @@ This will produce a suite of figures in various subfolders within `./fig/`.
 ### Run with CMEC driver
 
 An alternative workflow is available with [cmec-driver](https://github.com/cmecmetrics/cmec-driver). The workflow is:
-1. Clone the coastal-storm-metrics repo
-2. Install dependencies
-3. Register CyMeP in the cmec library:
-`python cmec-driver.py register path/to/cymep`
-4. Add TempestExtremes ASCII trajectories to cmec-driver/model
-5. Create configuration csv in cmec-driver/model
-6. Edit user settings in cmec-driver/config/cmec.json
+1. Clone the coastal-storm-metrics repo.
+2. Install dependencies.
+3. From the `cmec-driver` directory, register CyMeP in the cmec library:
+`python cmec-driver.py register <path to CyMeP repository>`
+4. Add TempestExtremes ASCII trajectories to `cmec-driver/model`.
+    - For testing, copy `cymep/trajs/*` to `cmec-driver/model`
+5. Create configuration csv in cmec-driver/model.
+    - For testing, copy `cymep/config-lists/rean_configs.csv` to `cmec-driver/model`.
+6. Edit user settings in cmec-driver/config/cmec.json.
+    - For testing, use the default settings.
 7. Run CyMeP module from cmec-driver:
 `python cmec-driver.py run model/ output/ CyMeP`
+8. Open `cmec-driver/output/CyMeP/index.html` to view results.
