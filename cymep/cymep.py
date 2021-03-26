@@ -5,8 +5,10 @@ import pandas as pd
 import json
 import scipy.stats as sps
 from netCDF4 import Dataset
+import json
 
 sys.path.insert(0, './functions')
+from getSettings import *
 from getTrajectories import *
 from mask_tc import *
 from track_density import *
@@ -30,6 +32,35 @@ do_special_filter_obs = True   # Special "if" block for first line (control)
 do_fill_missing_pw = True
 do_defineMIbypres = False
 
+# IO settings (do not change)
+wk_dir = '.'
+model_dir = 'trajs'
+csv_dir = 'config-lists'
+cmec = False
+
+## CMEC driver
+
+# If package is being run via cmec-driver, the following code section
+# will override the above user settings with information from the CMEC
+# environment variables and settings JSON.
+
+# Get CMEC environment vars
+if os.getenv("CMEC_WK_DIR") is not None:
+  wk_dir = os.getenv("CMEC_WK_DIR")
+if os.getenv("CMEC_MODEL_DATA") is not None:
+  model_dir = os.getenv("CMEC_MODEL_DATA")
+  csv_dir = model_dir
+
+# If using config json, load those settings
+if os.getenv("CMEC_CONFIG_DIR") is not None:
+  cmec = True
+  user_settings_json = os.path.join(os.getenv("CMEC_CONFIG_DIR"),"cmec.json")
+  user_settings = load_settings_from_json(user_settings_json)
+  # Set user settings as global variables
+  globals().update(user_settings)
+  print("basin is: ")
+  print(basin)
+
 #----------------------------------------------------------------------------------------
 
 # Constants
@@ -37,11 +68,9 @@ ms_to_kts = 1.94384449
 pi = 3.141592653589793
 deg2rad = pi / 180.
 
-#----------------------------------------------------------------------------------------
-
 # Read in configuration file and parse columns for each case
 # Ignore commented lines starting with !
-df=pd.read_csv("./config-lists/"+csvfilename, sep=',', comment='!', header=None)
+df=pd.read_csv(csv_dir+"/"+csvfilename, sep=',', comment='!', header=None)
 files = df.loc[ : , 0 ]
 strs = df.loc[ : , 1 ]
 isUnstructStr = df.loc[ : , 2 ]
@@ -96,7 +125,7 @@ for ii in range(len(files)):
     print("First character is /, using absolute path")
     trajfile=files[ii]
   else:
-    trajfile='trajs/'+files[ii]
+    trajfile=model_dir+"/"+files[ii]
   isUnstruc=isUnstructStr[ii]
   nVars=-1
   headerStr='start'
@@ -476,74 +505,37 @@ taydict["tay_bias2"]=np.empty(nfiles)
 for ii in range(nfiles):
   taydict["tay_bias2"][ii] = 100. * ( (aydict['uclim_count'][ii] - aydict['uclim_count'][0]) / aydict['uclim_count'][0] )
 
-# Define all the statistics we're producing with the 'prefix_suffix'
-# naming convention. Descriptions needed for JSON metrics.
-statistics = { "prefix": {
-            "sdy": "standard deviation of ",
-            "uclim": "climatological ",
-            "rxy": "spatial correlation of ",
-            "utc": "storm ",
-            "rp": "temporal pearson correlation of ",
-            "rs": "temporal spearman rank correlation of ",
-            "pm": "monthly ",
-            "tay": "taylor diagram ",
-            "py": "yearly "
-        },
-        "suffix": {
-            "count": "storm count",
-            "tcd": "tropical cyclone days",
-            "ace": "accumulated cyclone energy",
-            "pace": "pressure ACE",
-            "lmi": "latitude of lifetime-maximum intensity",
-            "latgen": "latitude of cyclone genesis",
-            "track": "track density",
-            "gen": "cyclone genesis",
-            "u10": "maximum 10m wind speed",
-            "slp": "minmum sea level pressure",
-            "pc": "pattern correlation",
-            "ratio": "ratio",
-            "bias": "bias",
-            "xmean": "test variable weighted areal average",
-            "ymean": "reference variable weighted areal average",
-            "xvar": "test variable weighted areal variance",
-            "yvar": "test variable weighted areal variance",
-            "rmse": "root mean square error",
-            "bias2": "relative bias"
-        }
-    }
-
+print("\nWriting metrics to file...")
 # Initialize output json
-wk_dir = "."
-test_path = "."
-obs_path = "."
-outjson = create_output_json(wk_dir,test_path,obs_path)
+if cmec:
+  outjson = create_output_json(wk_dir,model_dir)
 
 # Write out primary stats files
 csv_base = os.path.splitext(csvfilename)[0]+'_'+strbasin
 
 fname = 'metrics_'+csv_base+'_spatial_corr'
-cmec_desc = ['spatial_corr','spatial correlation','Statistics for spatial correlation table']
-write_single_csv(rxydict,strs,wk_dir,fname,statistics,cmec=cmec_desc)
+desc = ['spatial_corr','spatial correlation','Statistics for spatial correlation table']
+write_single_csv(rxydict,strs,wk_dir,fname,desc,cmec)
 
 fname = 'metrics_'+csv_base+'_temporal_scorr'
-cmec_desc = ['temporal_scorr', 'temporal spearman rank correlations','Statistics for temporal spearman rank correlation table']
-write_single_csv(rsdict,strs,wk_dir,fname,statistics,cmec=cmec_desc)
+desc = ['temporal_scorr', 'temporal spearman rank correlations','Statistics for temporal spearman rank correlation table']
+write_single_csv(rsdict,strs,wk_dir,fname,desc,cmec)
 
 fname = 'metrics_'+csv_base+'_temporal_pcorr'
-cmec_desc = ['temporal_pcorr','temporal pearson correlations','Statistics for temporal pearson correlation table']
-write_single_csv(rpdict,strs,wk_dir,fname,statistics,cmec=cmec_desc)
+desc = ['temporal_pcorr','temporal pearson correlations','Statistics for temporal pearson correlation table']
+write_single_csv(rpdict,strs,wk_dir,fname,desc,cmec)
 
 fname = 'metrics_'+csv_base+'_climo_mean'
-cmec_desc = ['climo_mean bias','climatological bias','Statistics for climatological bias table']
-write_single_csv(aydict,strs,wk_dir,fname,statistics,cmec=cmec_desc)
+desc = ['climo_mean bias','climatological bias','Statistics for climatological bias table']
+write_single_csv(aydict,strs,wk_dir,fname,desc,cmec)
 
 fname = 'metrics_'+csv_base+'_storm_mean'
-cmec_desc = ['storm_mean','storm mean bias','Statistics for storm mean bias table']
-write_single_csv(asdict,strs,wk_dir,fname,statistics,cmec=cmec_desc)
+desc = ['storm_mean','storm mean bias','Statistics for storm mean bias table']
+write_single_csv(asdict,strs,wk_dir,fname,desc,cmec)
 
 fname = 'means_'+csv_base+'_climo_mean'
-cmec_desc = ['climo_mean','climatological mean','Climatological mean statistics of reference dataset']
-write_single_csv(stdydict,strs[0],wk_dir,fname,statistics,cmec=cmec_desc)
+desc = ['climo_mean','climatological mean','Climatological mean statistics of reference dataset']
+write_single_csv(stdydict,strs[0],wk_dir,fname,desc,cmec)
 
 # Package a series of global package inputs for storage as NetCDF attributes
 globaldict={}
@@ -552,4 +544,4 @@ for x in globaldictvars:
   globaldict[x] = globals()[x]
 
 # Write NetCDF file
-write_spatial_netcdf(msdict,pmdict,pydict,taydict,strs,nyears,nmonths,denslat,denslon,globaldict,wk_dir,cmec=True)
+write_spatial_netcdf(msdict,pmdict,pydict,taydict,strs,nyears,nmonths,denslat,denslon,globaldict,wk_dir,cmec)

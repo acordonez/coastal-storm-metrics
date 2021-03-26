@@ -54,11 +54,7 @@ Each subsequent line (31 lines) contains a point along the trajectory. Currently
 | 4 | lat | longitude (degrees north)  |
 | 5 | slp | sea level pressure (Pa)  |
 | 6 | wind | wind speed (m/s) |
-<<<<<<< HEAD
-| 7 | phis | surface geopotential (m2/s2)  |
-=======
 | 7 | phis | surface geopotential (m<sup>2</sup>/s<sup>2</sup>)  |
->>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f
 | 8 | yyyy | year integer |
 | 9 | mm | month integer  |
 | 10 | dd | day integer  |
@@ -66,13 +62,8 @@ Each subsequent line (31 lines) contains a point along the trajectory. Currently
 
 There are two folders within the package that may be helpful:
 
-<<<<<<< HEAD
-1. An example of generating a TempestExtremes trajectory file from reanalysis is found in XXXXXX. This script reads in XXXX data and generates a track file on NCAR Cheyenne.
-2. Sample scripts for creating alternative formats can be found in `./convert-traj/`. For example, one could use `ibtracs_to_tempest.ncl` to generate a text-based file compatibile with the software package from an IBTrACS NetCDF file.
-=======
 1. An example of generating a TempestExtremes trajectory file from reanalysis is found in `${CYMEP}/tempest-tc/`. This script reads in MERRA2 data and generates a track file on NCAR Cheyenne.
 2. Sample scripts for creating alternative formats can be found in `${CYMEP}/convert-traj/`. For example, one could use `ibtracs_to_tempest.ncl` to generate a text-based file compatibile with the software package from an IBTrACS NetCDF file.
->>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f
 
 ### 2. Create a CSV file describing model configurations
 
@@ -108,16 +99,9 @@ Using the first line as an example...
 
 | Variable | Description |
 | --- | --- |
-<<<<<<< HEAD
-| out_type | NCL output graphic format (e.g., pdf, png, eps) |
-| gridsize | Length of side of each square gridbox used for spatial analysis in degrees (e.g., 8.0) |
-| basin | Set to negative to turn off filtering, otherwise specify particular ocean basin/hemisphere based on mask functions |
-| filename | The name of the file stored in `config_files` that contains the list of files to be analyzed |
-=======
 | gridsize | Length of side of each square gridbox used for spatial analysis in degrees (e.g., 8.0) |
 | basin | Set to negative to turn off filtering, otherwise specify particular ocean basin/hemisphere based on mask functions |
 | csvfilename | The name of the file stored in `config_files` that contains the list of files to be analyzed |
->>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f
 | styr | Start year for overlapping interannual correlation analysis |
 | enyr | End year for overlapping interannual correlation analysis |
 | truncate_years | If `True` then filter out years external to styr and enyr. If `False` keep all data |
@@ -127,11 +111,7 @@ Using the first line as an example...
 | THRESHOLD_ACE_WIND | Select threshold wind (in m/s) for ACE calculations (negative value means no threshold) |
 | THRESHOLD_PACE_PRES | Select threshold SLP (in hPa) for PACE calculations (negative value means no threshold) |
 
-<<<<<<< HEAD
-**NOTE**: if you have a non-TempestExtremes-TC configuration, you need to modify the array extraction found by grepping for `USER_MODIFY` in `cymep.py`
-=======
 **NOTE**: if you have a non-TempestExtremes-TC configuration, you need to modify the array extraction found by grepping for `USER_MODIFY` in `cymep.py`.
->>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f
 
 ### 4. Run cymep.py
 
@@ -141,11 +121,7 @@ Finally, run cymep.
 $> python cymep.py
 ```
 
-<<<<<<< HEAD
-This will produce two sets of files. One, a handful of CSV files in `./csv-files/`. Two, a NetCDF file in `./netcdf-files/`.
-=======
 This will produce two sets of files. One, a handful of CSV files in `${CYMEP}/cymep/csv-files/`. Two, a NetCDF file in `${CYMEP}/cymep/netcdf-files/`.
->>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f
 
 NOTE: Eventually, the `csv-files` folder will become obsolete and all output from the suite will be packaged via NetCDF.
 
@@ -155,13 +131,22 @@ NOTE: Eventually, the `csv-files` folder will become obsolete and all output fro
 $> ./graphics-cymep.sh netcdf-files/netcdf_GLOB_rean_configs.nc
 ```
 
-<<<<<<< HEAD
-This will produce a suite of figures in various subfolders within `./fig/`
-
-
-
-
-
-=======
 This will produce a suite of figures in various subfolders within `./fig/`.
->>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f
+
+
+### Run with CMEC driver
+
+An alternative workflow is available with [cmec-driver](https://github.com/cmecmetrics/cmec-driver). The workflow is:
+1. Clone the coastal-storm-metrics repo.
+2. Install dependencies.
+3. From the `cmec-driver` directory, register CyMeP in the cmec library:
+`python cmec-driver.py register <path to CyMeP repository>`
+4. Add TempestExtremes ASCII trajectories to `cmec-driver/model`.
+    - For testing, copy `cymep/trajs/*` to `cmec-driver/model`
+5. Create configuration csv in cmec-driver/model.
+    - For testing, copy `cymep/config-lists/rean_configs.csv` to `cmec-driver/model`.
+6. Edit user settings in cmec-driver/config/cmec.json.
+    - For testing, use the default settings.
+7. Run CyMeP module from cmec-driver:
+`python cmec-driver.py run model/ output/ CyMeP`
+8. Open `cmec-driver/output/CyMeP/index.html` to view results.

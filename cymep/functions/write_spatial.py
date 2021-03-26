@@ -21,8 +21,14 @@ def set_metric_definitions(metric_list, desc):
     metric_dict = {}
     for metric in metric_list:
         pre,suf = metric.split('_')
-        metric_desc = desc["prefix"][pre] + desc["suffix"][suf]
-        metric_dict[metric] = metric_desc
+        if (pre in desc["prefix"]) and (suf in desc["suffix"]):
+          metric_desc = desc["prefix"][pre] + desc["suffix"][suf]
+          metric_dict[metric] = metric_desc
+        else:
+          print("Warning: missing metric description in "
+            + "write_spatial.define_statistics()"
+            + " for metric {0} {1}".format(pre,suf))
+          metric_dict[metric] = ""
     return metric_dict
 
 def get_dimensions(json_dict, json_structure):
@@ -66,7 +72,45 @@ def get_env():
     versions['ncl'] = ncl
     return versions
 
-def create_output_json(wkdir,test_path,obs_path):
+def define_statistics():
+  # Define all the statistics we're producing with the 'prefix_suffix'
+  # naming convention. Descriptions needed for the JSON metrics.
+  statistics = { "prefix": {
+              "sdy": "standard deviation of ",
+              "uclim": "climatological ",
+              "rxy": "spatial correlation of ",
+              "utc": "storm ",
+              "rp": "temporal pearson correlation of ",
+              "rs": "temporal spearman rank correlation of ",
+              "pm": "monthly ",
+              "tay": "taylor diagram ",
+              "py": "yearly "
+          },
+          "suffix": {
+              "count": "storm count",
+              "tcd": "tropical cyclone days",
+              "ace": "accumulated cyclone energy",
+              "pace": "pressure ACE",
+              "lmi": "latitude of lifetime-maximum intensity",
+              "latgen": "latitude of cyclone genesis",
+              "track": "track density",
+              "gen": "cyclone genesis",
+              "u10": "maximum 10m wind speed",
+              "slp": "minmum sea level pressure",
+              "pc": "pattern correlation",
+              "ratio": "ratio",
+              "bias": "bias",
+              "xmean": "test variable weighted areal average",
+              "ymean": "reference variable weighted areal average",
+              "xvar": "test variable weighted areal variance",
+              "yvar": "test variable weighted areal variance",
+              "rmse": "root mean square error",
+              "bias2": "relative bias"
+          }
+      }
+  return statistics
+
+def create_output_json(wkdir,test_path):
 
   log_path = wkdir + "/CyMeP.log.txt"
   out_json = {'index': 'index',
@@ -76,7 +120,7 @@ def create_output_json(wkdir,test_path,obs_path):
               'metrics': {}}
   out_json["provenance"] = {"environment": get_env(),
               "modeldata": test_path,
-              "obsdata": obs_path,
+              "obsdata": None,
               "log": log_path}
   out_json["data"] = {}
   out_json["metrics"] = {}
@@ -90,7 +134,7 @@ def create_output_json(wkdir,test_path,obs_path):
   with open(outfilepath,"w") as outfilename:
     json.dump(out_json, outfilename, indent=2)
 
-def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyears,nmonths,latin,lonin,globaldict,wkdir,cmec=None):
+def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyears,nmonths,latin,lonin,globaldict,wkdir,cmec=False):
 
   # Convert modelsin from pandas to list
   modelsin=modelsin.tolist()
@@ -103,6 +147,7 @@ def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyear
 
   netcdfdir=wkdir + "/netcdf-files/"
   os.makedirs(os.path.dirname(netcdfdir), exist_ok=True)
+  os.chmod(os.path.dirname(netcdfdir),0o777)
   netcdfile=netcdfdir+"/netcdf_"+globaldict['strbasin']+"_"+os.path.splitext(globaldict['csvfilename'])[0]
 
   # open a netCDF file to write
@@ -170,7 +215,7 @@ def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyear
   # close files
   ncout.close()
 
-  if cmec is not None:
+  if cmec:
     # Update metadata in output.json
     desc = {
       "region": globaldict["strbasin"],
@@ -333,12 +378,13 @@ def write_spatial_jsons(permondict,peryrdict,taydict,modelsin,nyears,globaldict,
   with open(os.path.join(wkdir,output_json), "w") as outfilename:
     json.dump(outjson, outfilename, indent=2)
 
-def write_single_json(vardict,modelsin,wkdir,jsonname,statistics,cmec):
+def write_single_json(vardict,modelsin,wkdir,jsonname,desc):
   # CSV files
   # This section converts the metrics stored in
   # csv files to the CMEC json format.
   json_structure = ["model", "metric"]
   cmec_json = {"DIMENSIONS": {"json_structure": json_structure}, "RESULTS": {}}
+  statistics = define_statistics()
   # convert all the csv files in csv-files/ to json
   if isinstance(modelsin,str):
     modelsin = [modelsin]
@@ -366,14 +412,14 @@ def write_single_json(vardict,modelsin,wkdir,jsonname,statistics,cmec):
   with open(cmec_file_name, "w") as cmecfile:
       json.dump(cmec_json, cmecfile, indent=2)
 
-  desc = {cmec[0] + " json": {
-    "longname": cmec[1],
-    "description": cmec[2],
+  metric_desc = {desc[0] + " json": {
+    "longname": desc[1],
+    "description": desc[2],
     "filename": os.path.relpath(cmec_file_name, start=wkdir)
   }}
   with open(os.path.join(wkdir,output_json),"r") as outfilename:
     tmp = json.load(outfilename)
-  tmp["metrics"].update(desc)
+  tmp["metrics"].update(metric_desc)
   with open(os.path.join(wkdir,output_json),"w") as outfilename:
     json.dump(tmp, outfilename, indent=2)
 
@@ -389,10 +435,11 @@ def write_dict_csv(vardict,modelsin):
       tmp = np.concatenate((np.expand_dims(modelsin, axis=1), vardict[ii]), axis=1)
     np.savetxt(csvfilename, tmp, delimiter=",", fmt="%s")
 
-def write_single_csv(vardict,modelsin,wkdir,csvname,statistics,cmec=None):
+
+def write_single_csv(vardict,modelsin,wkdir,csvname,desc,cmec=False):
   # create variable array
   csvdir = os.path.join(wkdir,'csv-files')
-  os.makedirs(os.path.dirname(csvdir), exist_ok=True)
+  os.makedirs(csvdir, exist_ok=True)
   csvfilename = csvdir+"/"+csvname+".csv"
 
   # If a single line CSV with one model
@@ -430,18 +477,19 @@ def write_single_csv(vardict,modelsin,wkdir,csvname,statistics,cmec=None):
   # Write header + data array
   np.savetxt(csvfilename, tmp, delimiter=",", fmt="%s", header=headerstr, comments="")
 
-  if cmec is not None:
+  if cmec:
     # write to output json
     with open(os.path.join(wkdir,output_json), "r") as outfilename:
       outjson = json.load(outfilename)
-    key = cmec[0] + " csv"
-    desc = {key: {
-      "longname": cmec[1],
-      "description": cmec[2],
+    key = desc[0] + " csv"
+    metric_desc = {key: {
+      "longname": desc[1],
+      "description": desc[2],
       "filename": os.path.relpath(csvfilename, start=wkdir)
     }}
-    outjson["metrics"].update(desc)
+    outjson["metrics"].update(metric_desc)
     with open(os.path.join(wkdir,output_json), "w") as outfilename:
       json.dump(outjson, outfilename, indent=2)
 
-    write_single_json(vardict,modelsin,wkdir,csvname,statistics,cmec)
+    # Dump metrics into JSONs
+    write_single_json(vardict,modelsin,wkdir,csvname,desc)
