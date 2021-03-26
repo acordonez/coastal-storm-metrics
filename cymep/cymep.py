@@ -32,11 +32,11 @@ do_special_filter_obs = True   # Special "if" block for first line (control)
 do_fill_missing_pw = True
 do_defineMIbypres = False
 
-# IO settings (do not change)
-wk_dir = '.'
-model_dir = 'trajs'
-csv_dir = 'config-lists'
-cmec = False
+# IO settings (Users: do not change)
+wkdir = '.'
+modeldir = 'trajs'
+csvdir = 'config-lists'
+cmec_driver = False
 
 ## CMEC driver
 
@@ -46,14 +46,14 @@ cmec = False
 
 # Get CMEC environment vars
 if os.getenv("CMEC_WK_DIR") is not None:
-  wk_dir = os.getenv("CMEC_WK_DIR")
+  wkdir = os.getenv("CMEC_WK_DIR")
 if os.getenv("CMEC_MODEL_DATA") is not None:
-  model_dir = os.getenv("CMEC_MODEL_DATA")
-  csv_dir = model_dir
+  modeldir = os.getenv("CMEC_MODEL_DATA")
+  csvdir = modeldir
 
 # If using config json, load those settings
 if os.getenv("CMEC_CONFIG_DIR") is not None:
-  cmec = True
+  cmec_driver = True
   user_settings_json = os.path.join(os.getenv("CMEC_CONFIG_DIR"),"cmec.json")
   user_settings = load_settings_from_json(user_settings_json)
   # Set user settings as global variables
@@ -70,7 +70,7 @@ deg2rad = pi / 180.
 
 # Read in configuration file and parse columns for each case
 # Ignore commented lines starting with !
-df=pd.read_csv(csv_dir+"/"+csvfilename, sep=',', comment='!', header=None)
+df=pd.read_csv(csvdir+"/"+csvfilename, sep=',', comment='!', header=None)
 files = df.loc[ : , 0 ]
 strs = df.loc[ : , 1 ]
 isUnstructStr = df.loc[ : , 2 ]
@@ -125,7 +125,7 @@ for ii in range(len(files)):
     print("First character is /, using absolute path")
     trajfile=files[ii]
   else:
-    trajfile=model_dir+"/"+files[ii]
+    trajfile=modeldir+"/"+files[ii]
   isUnstruc=isUnstructStr[ii]
   nVars=-1
   headerStr='start'
@@ -507,35 +507,35 @@ for ii in range(nfiles):
 
 print("\nWriting metrics to file...")
 # Initialize output json
-if cmec:
-  outjson = create_output_json(wk_dir,model_dir)
+if cmec_driver:
+  outjson = create_output_json(wkdir,modeldir)
 
 # Write out primary stats files
 csv_base = os.path.splitext(csvfilename)[0]+'_'+strbasin
 
 fname = 'metrics_'+csv_base+'_spatial_corr'
 desc = ['spatial_corr','spatial correlation','Statistics for spatial correlation table']
-write_single_csv(rxydict,strs,wk_dir,fname,desc,cmec)
+write_single_csv(rxydict,strs,wkdir,fname,desc,cmec_driver)
 
 fname = 'metrics_'+csv_base+'_temporal_scorr'
 desc = ['temporal_scorr', 'temporal spearman rank correlations','Statistics for temporal spearman rank correlation table']
-write_single_csv(rsdict,strs,wk_dir,fname,desc,cmec)
+write_single_csv(rsdict,strs,wkdir,fname,desc,cmec_driver)
 
 fname = 'metrics_'+csv_base+'_temporal_pcorr'
 desc = ['temporal_pcorr','temporal pearson correlations','Statistics for temporal pearson correlation table']
-write_single_csv(rpdict,strs,wk_dir,fname,desc,cmec)
+write_single_csv(rpdict,strs,wkdir,fname,desc,cmec_driver)
 
 fname = 'metrics_'+csv_base+'_climo_mean'
 desc = ['climo_mean bias','climatological bias','Statistics for climatological bias table']
-write_single_csv(aydict,strs,wk_dir,fname,desc,cmec)
+write_single_csv(aydict,strs,wkdir,fname,desc,cmec_driver)
 
 fname = 'metrics_'+csv_base+'_storm_mean'
 desc = ['storm_mean','storm mean bias','Statistics for storm mean bias table']
-write_single_csv(asdict,strs,wk_dir,fname,desc,cmec)
+write_single_csv(asdict,strs,wkdir,fname,desc,cmec_driver)
 
 fname = 'means_'+csv_base+'_climo_mean'
 desc = ['climo_mean','climatological mean','Climatological mean statistics of reference dataset']
-write_single_csv(stdydict,strs[0],wk_dir,fname,desc,cmec)
+write_single_csv(stdydict,strs[0],wkdir,fname,desc,cmec_driver)
 
 # Package a series of global package inputs for storage as NetCDF attributes
 globaldict={}
@@ -544,4 +544,4 @@ for x in globaldictvars:
   globaldict[x] = globals()[x]
 
 # Write NetCDF file
-write_spatial_netcdf(msdict,pmdict,pydict,taydict,strs,nyears,nmonths,denslat,denslon,globaldict,wk_dir,cmec)
+write_spatial_netcdf(msdict,pmdict,pydict,taydict,strs,nyears,nmonths,denslat,denslon,globaldict,wkdir,cmec_driver)

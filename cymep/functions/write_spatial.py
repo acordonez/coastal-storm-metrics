@@ -4,6 +4,7 @@ import netCDF4 as nc
 from datetime import datetime
 import os
 
+# global name for cmec descriptive json
 output_json = "output.json"
 
 def create_dims(dims_dict, **kwargs):
@@ -17,7 +18,7 @@ def create_dims(dims_dict, **kwargs):
     return dims_dict
 
 def set_metric_definitions(metric_list, desc):
-    """Populates metrics definitions using template."""
+    """Populates metrics definitions using template dictionary."""
     metric_dict = {}
     for metric in metric_list:
         pre,suf = metric.split('_')
@@ -45,12 +46,8 @@ def get_dimensions(json_dict, json_structure):
             if first_key == "attributes":
                 first_key = list(json_dict.items())[1][0]
             dim = json_structure[level]
-            if dim == "statistic":
-                keys = [key for key in json_dict]
-                keylist[dim] = {"indices": keys}
-            else:
-                keys = {key: {} for key in json_dict if key != "attributes"}
-                keylist[dim] = keys
+            keys = {key: {} for key in json_dict if key != "attributes"}
+            keylist[dim] = keys
             json_dict = json_dict[first_key]
         level += 1
     return keylist
@@ -73,8 +70,8 @@ def get_env():
     return versions
 
 def define_statistics():
-  # Define all the statistics we're producing with the 'prefix_suffix'
-  # naming convention. Descriptions needed for the JSON metrics.
+  """Define all the statistics we're producing with the 'prefix_suffix'
+  naming convention. Descriptions needed for the JSON metrics."""
   statistics = { "prefix": {
               "sdy": "standard deviation of ",
               "uclim": "climatological ",
@@ -110,8 +107,9 @@ def define_statistics():
       }
   return statistics
 
-def create_output_json(wkdir,test_path):
-
+def create_output_json(wkdir,modeldir):
+  """Initialize the output.json file that describes module outputs
+  for cmec-driver"""
   log_path = wkdir + "/CyMeP.log.txt"
   out_json = {'index': 'index',
               'provenance': {},
@@ -119,7 +117,7 @@ def create_output_json(wkdir,test_path):
               'html': "index.html",
               'metrics': {}}
   out_json["provenance"] = {"environment": get_env(),
-              "modeldata": test_path,
+              "modeldata": modeldir,
               "obsdata": None,
               "log": log_path}
   out_json["data"] = {}
@@ -219,7 +217,7 @@ def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyear
     # Update metadata in output.json
     desc = {
       "region": globaldict["strbasin"],
-      "filename": netcdfile,
+      "filename": os.path.relpath(netcdfile,start=wkdir)
       "longname": globaldict["strbasin"] + " netcdf output",
       "description": "Coastal metrics processed data"
     }
@@ -230,19 +228,19 @@ def write_spatial_netcdf(spatialdict,permondict,peryrdict,taydict,modelsin,nyear
       json.dump(tmp, outfilename, indent=2)
 
     # Dump metrics in json format
-    write_spatial_jsons(permondict,peryrdict,taydict,modelsin,nyears,globaldict,wkdir)
+    write_nc_metrics_jsons(permondict,peryrdict,taydict,modelsin,nyears,globaldict,wkdir)
 
-def write_spatial_jsons(permondict,peryrdict,taydict,modelsin,nyears,globaldict,wkdir):
-  # Output metrics from netCDF into JSONs
+def write_nc_metrics_jsons(permondict,peryrdict,taydict,modelsin,nyears,globaldict,wkdir):
+  """Output metrics from netCDF into JSONs."""
 
   with open(os.path.join(wkdir,output_json), "r") as outfilename:
     outjson = json.load(outfilename)
 
+  os.makedirs(wkdir+"/json",exist_ok=True)
   base_file_name=wkdir+"/json/netcdf_"+globaldict['strbasin']+"_"+os.path.splitext(globaldict['csvfilename'])[0]
 
   # Load descriptions for all the different file names
-  with open("functions/output_templates/output_desc.json") as description_file:
-    data_desc = json.load(description_file)
+  data_desc = define_statistics()
 
   permon_json_name = base_file_name + "_month.json"
   peryr_json_name = base_file_name + "_year.json"
@@ -250,36 +248,12 @@ def write_spatial_jsons(permondict,peryrdict,taydict,modelsin,nyears,globaldict,
   model_dict = dict.fromkeys(modelsin, {})
   model_count = len(modelsin)
 
-  # Create a descriptive dictionary of these new json files
-  # for output.json since these are not described in output_desc.json
-  netcdf_desc = {peryr_json_name: {
-                                    "filename": "",
-                                    "longname": "yearly cyclone metrics",
-                                    "description": "yearly cyclone metrics converted from netcdf"
-               },
-               permon_json_name: {
-                                    "filename": "",
-                                    "longname": "monthly cyclone metrics",
-                                    "description": "monthly cyclone metrics converted from netcdf"
-               },
-               tay_json_name: {
-                                    "filename": "",
-                                    "longname": "Taylor cyclone metrics",
-                                    "description": "Taylor cyclone metrics converted from netcdf"
-               }
-  }
-
-  try:
-    os.mkdir(wkdir+"/json")
-  except FileExistsError:
-    pass
-
   #-----Monthly-----
   # Set up metric dimensions
   json_month = {"DIMENSIONS": {
                 "json_structure": ["model", "metric", "month"], "dimensions": {}}}
   metric_list = [*permondict]
-  met_dict = set_metric_definitions(metric_list, data_desc["statistics"])
+  met_dict = set_metric_definitions(metric_list, data_desc)
   month_dict = {"0": "January", "1": "February", "2": "March", "3": "April",
                 "4": "May", "5": "June", "6": "July", "7": "August",
                 "8": "September", "9": "October", "10": "November",
@@ -306,7 +280,7 @@ def write_spatial_jsons(permondict,peryrdict,taydict,modelsin,nyears,globaldict,
   # Update entry in metadata json
   outjson["metrics"][os.path.basename(permon_json_name)] = {
     "longname": "Monthly cyclone metrics",
-    "filename": permon_json_name,
+    "filename": os.path.relpath(permon_json_name,start=wkdir),
     "description": "monthly cyclone metrics converted from netcdf"
   }
 
@@ -314,7 +288,7 @@ def write_spatial_jsons(permondict,peryrdict,taydict,modelsin,nyears,globaldict,
   json_year = {"DIMENSIONS": {
               "json_structure": ["model", "metric", "year"], "dimensions": {}}}
   metric_list = [*peryrdict]
-  met_dict = set_metric_definitions(metric_list, data_desc["statistics"])
+  met_dict = set_metric_definitions(metric_list, data_desc)
   year_list = [y for y in range(int(globaldict["styr"]), int(globaldict["enyr"])+1)]
   # Populate RESULTS
   results_json = {"RESULTS": {}}
@@ -341,7 +315,7 @@ def write_spatial_jsons(permondict,peryrdict,taydict,modelsin,nyears,globaldict,
   # Update entry in metadata json
   outjson["metrics"][os.path.basename(peryr_json_name)] = {
     "longname": "Yearly cyclone metrics",
-    "filename": peryr_json_name,
+    "filename": os.path.relpath(peryr_json_name,start=wkdir),
     "description": "Yearly cyclone metrics converted from netcdf"
   }
 
@@ -349,7 +323,7 @@ def write_spatial_jsons(permondict,peryrdict,taydict,modelsin,nyears,globaldict,
   json_taylor = {"DIMENSIONS": {
                 "json_structure": ["model", "metric"], "dimensions": {}}}
   metric_list = [*taydict]
-  met_dict = set_metric_definitions(metric_list, data_desc["statistics"])
+  met_dict = set_metric_definitions(metric_list, data_desc)
   # Populate Results
   results_json = {"RESULTS": {}}
   for model_num,model_name in enumerate(modelsin):
@@ -370,7 +344,7 @@ def write_spatial_jsons(permondict,peryrdict,taydict,modelsin,nyears,globaldict,
   # Update entry in metadata json
   outjson["metrics"][os.path.basename(tay_json_name)] = {
     "longname": "Taylor cyclone metrics",
-    "filename": tay_json_name,
+    "filename": os.path.relpath(tay_json_name,start=wkdir),
     "description": "Taylor cyclone metrics converted from netcdf"
   }
 
@@ -437,6 +411,10 @@ def write_dict_csv(vardict,modelsin):
 
 
 def write_single_csv(vardict,modelsin,wkdir,csvname,desc,cmec=False):
+  """Write metrics to csv file. If cmec=True, also write metrics to JSON.
+  desc is a 3-part list of strings containing 1) unique identifier,
+  2) longname 3) description."""
+
   # create variable array
   csvdir = os.path.join(wkdir,'csv-files')
   os.makedirs(csvdir, exist_ok=True)

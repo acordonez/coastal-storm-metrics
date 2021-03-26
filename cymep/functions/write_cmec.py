@@ -1,20 +1,13 @@
 """
 write_cmec.py
 
-This script generates module output data based on the CMEC convention.
+This script generates figure information for the output.json file that
+accompanies the module output. It also creates an html landing page that
+links to the output figures and metrics JSONs.
 
-NetCDF and CSV outputs are converted to CMEC compliant jsons. A descriptive
-output.json file is generated along with an html landing page (index.html).
-All of the output files (netcdf, csv, json, and figures) are described in
-output.json.
+This is run after the figures are generated in the CyMeP CMEC driver script.
 
-If a new output file is being added to the CyMeP package, information
-will need to be added to the description template
-(cymep/functions/output_templates/output_desc.json) so the file is included
-in output.json.
-
-The CMEC environment variables $CMEC_MODEL_DIR and $CMEC_WK_DIR must be set to run
-this script successfully.
+The CMEC environment variables must be set to run this script successfully.
 """
 import csv
 import json
@@ -25,8 +18,9 @@ import numpy as np
 import xarray as xr
 
 def define_figures():
-  # Store descriptions and longnames of the CyMeP output figures,
-  # organized by subfolder and unique keywords.
+  """Store descriptions and longnames of the CyMeP output figures,
+  organized by subfolder and unique keywords. Each of the top-level
+  keys will become a subheading on the html page."""
   figure_description = {
     "tables":{
       "temporal_scorr": {
@@ -112,7 +106,7 @@ def define_figures():
   return figure_description
 
 def populate_filename(data_dict, filename):
-  """Populate filename key in output json."""
+  """Combine filename and description info for output.json."""
   output_dict = {}
   for key in data_dict:
     if key in filename:
@@ -154,9 +148,9 @@ def populate_html_figures(html_lines, fig_dict):
   linetemplate = Template(html_lines[title_ind+1])
   # Replace template lines with actual html for each figure
   count = 0
-  for plot in fig_dict:
+  for plot_category in fig_dict:
     # Sub the folder name into the title line
-    titledict = {"title": plot.capitalize()}
+    titledict = {"title": plot_category.capitalize()}
     # Since we're pulling lines from the template and then overwriting
     # them, we need to keep track of insertions
     if count == 0:
@@ -165,8 +159,8 @@ def populate_html_figures(html_lines, fig_dict):
       html_lines.insert(title_ind+count, titletemplate.substitute(titledict))
     count += 1
     # Sub the figure names into the figure lines
-    for file in fig_dict[plot]:
-      html_dict = {"plot": file, "folder": plot}
+    for file in fig_dict[plot_category]:
+      html_dict = {"plot": file, "folder": plot_category}
       newfig = linetemplate.substitute(html_dict)
       if count == 1:
         html_lines[title_ind+count] = newfig

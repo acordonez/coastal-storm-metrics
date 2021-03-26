@@ -14,6 +14,7 @@ if [[ $? = 0 ]]; then
 
     # Make figures for each netcdf
     for file in ${CMEC_WK_DIR}/netcdf-files/*; do
+        echo "\n"$file >> $cymep_log
         ncl ./plotting/plot-spatial.ncl 'out_type="png"' 'ncfile="'$file'"' >> $cymep_log
         ncl ./plotting/plot-temporal.ncl 'out_type="png"' 'ncfile="'$file'"' >> $cymep_log
         ncl ./plotting/plot-taylor.ncl 'out_type="png"' 'ncfile="'$file'"' >> $cymep_log
