@@ -3,7 +3,7 @@ load "../functions/read_csv.ncl"
 begin
 
 ;=================== Get traj data ================================
-filename = "../../python/config-lists/highresmip_configs.csv"
+filename = "../../cymep/config-lists/highresmip_configs.csv"
 lines = asciiread(filename,-1,"string")
 delim = ","
 files  =           str_get_field(lines,1,delim)
@@ -21,12 +21,8 @@ delim=","
 do ii = 0,dimsizes(files)-1
 if (str_get_cols(files(ii),0,0).ne."!") then
 
-<<<<<<< HEAD:ncl/landfall/landfall-count.ncl
-  thisFile="./landfall_txt/LF."+files(ii)
-=======
   filebase=systemfunc("basename "+files(ii))
   thisFile="./landfall_txt/LF."+filebase
->>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f:ncl/landfall/landfall-count.ncl
 
   nyears=ensmembers(ii)*yearspermember(ii)
   file1=read_CSV_f(thisFile)

@@ -62,25 +62,25 @@ end do
 ;print("-----")
 ;print(ibtime(0,:)+" "+ibtime(1,:))
 
-;	int FIRST_PT(tracks) ;
-;		FIRST_PT:description = "Index to first point of this track number" ;
-;		FIRST_PT:units = "1" ;
-;		FIRST_PT:long_name = "first_pt" ;
-;	int NUM_PTS(tracks) ;
-;		NUM_PTS:description = "Number of points for this track (6 hour intervals)" ;
-;		NUM_PTS:units = "1" ;
-;		NUM_PTS:long_name = "num_pts" ;
-;	int TRACK_ID(tracks) ;
-;		TRACK_ID:add_fld_num = 9 ;
-;		TRACK_ID:tot_add_fld_num = 27 ;
-;		TRACK_ID:loc_flags = 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
-;		TRACK_ID:description = "Tropical cyclone track number this year (0-tracks-1)" ;
-;		TRACK_ID:units = "1" ;
-;		TRACK_ID:long_name = "track_id" ;
-;	int index(record) ;
-;		index:description = "Track sequence number (0-length of track-1)" ;
-;		index:units = "1" ;
-;		index:long_name = "index" ;
+; int FIRST_PT(tracks) ;
+;   FIRST_PT:description = "Index to first point of this track number" ;
+;   FIRST_PT:units = "1" ;
+;   FIRST_PT:long_name = "first_pt" ;
+; int NUM_PTS(tracks) ;
+;   NUM_PTS:description = "Number of points for this track (6 hour intervals)" ;
+;   NUM_PTS:units = "1" ;
+;   NUM_PTS:long_name = "num_pts" ;
+; int TRACK_ID(tracks) ;
+;   TRACK_ID:add_fld_num = 9 ;
+;   TRACK_ID:tot_add_fld_num = 27 ;
+;   TRACK_ID:loc_flags = 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
+;   TRACK_ID:description = "Tropical cyclone track number this year (0-tracks-1)" ;
+;   TRACK_ID:units = "1" ;
+;   TRACK_ID:long_name = "track_id" ;
+; int index(record) ;
+;   index:description = "Track sequence number (0-length of track-1)" ;
+;   index:units = "1" ;
+;   index:long_name = "index" ;
 
 ibwind_=where(ismissing(ibwind_),-999.,ibwind_)
 ibpres=where(ismissing(ibpres),-9999.,ibpres)
@@ -99,7 +99,7 @@ PHIS=phisfile->PHIS
 
 ;system("echo "+quote+             +quote+" >> "+filename)
 quote = inttochar(34)
-delim="	"
+delim=" "
 filename="./trajectories.txt."+basename
 system("rm -rf "+filename)
 
@@ -161,13 +161,8 @@ do ii = 0,ibstormcount-1
           if (gridfile .ne. "") then
             if (.not. isdefined("gridlat")) then
               gridf=addfile(gridfile,"r")
-<<<<<<< HEAD
-              gridlat=gridf->latitude
-              gridlon=gridf->longitude
-=======
               gridlat=gridf->lat
               gridlon=gridf->lon
->>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f
             end if
             thisLat=minind(abs(gridlat-iblat(ii,jj)))
             thisLon=minind(abs(gridlon-iblon(ii,jj)))
@@ -185,18 +180,12 @@ do ii = 0,ibstormcount-1
 
           ; There is a potential bug here, where either the calendar converts to missing
           ; or it converts such that the hour is off by one
-<<<<<<< HEAD
-          thisdate=cd_calendar(ibtime(ii,jj),0)
-          if (any(ismissing(thisdate))) then
-            print("MISSING! "+ibtime(ii,jj)+" at "+ii+" "+jj)
-=======
 
           ; this should be cd_calendar, but we get errors. trying ut_calendar_fix
           thisdate=ut_calendar_fix(ibtime(ii,jj),0)
           if (any(ismissing(thisdate))) then
             print("MISSING! "+ibtime(ii,jj)+" at "+ii+" "+jj)
             exit
->>>>>>> 916c1fbfb15202657e56cd55dfecd5cdcfa6588f
             totalerrors=totalerrors+1
           else if (mod(thisdate(0,3),6) .ne. 0) then
             print("ERROR! "+ibtime(ii,jj)+" at "+ii+" "+jj+"    thinks hour equal "+thisdate(0,3))
@@ -223,4 +212,4 @@ end do
 end
 
 print("Total errors! "+totalerrors)
-	;13056	41.470669	-19.662915	9.957811e+04	1.960049e+01	1979	1	16	12
+  ;13056  41.470669 -19.662915  9.957811e+04  1.960049e+01  1979  1 16  12
