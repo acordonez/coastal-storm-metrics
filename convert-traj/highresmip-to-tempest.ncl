@@ -62,25 +62,25 @@ end do
 ;print("-----")
 ;print(ibtime(0,:)+" "+ibtime(1,:))
 
-; int FIRST_PT(tracks) ;
-;   FIRST_PT:description = "Index to first point of this track number" ;
-;   FIRST_PT:units = "1" ;
-;   FIRST_PT:long_name = "first_pt" ;
-; int NUM_PTS(tracks) ;
-;   NUM_PTS:description = "Number of points for this track (6 hour intervals)" ;
-;   NUM_PTS:units = "1" ;
-;   NUM_PTS:long_name = "num_pts" ;
-; int TRACK_ID(tracks) ;
-;   TRACK_ID:add_fld_num = 9 ;
-;   TRACK_ID:tot_add_fld_num = 27 ;
-;   TRACK_ID:loc_flags = 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
-;   TRACK_ID:description = "Tropical cyclone track number this year (0-tracks-1)" ;
-;   TRACK_ID:units = "1" ;
-;   TRACK_ID:long_name = "track_id" ;
-; int index(record) ;
-;   index:description = "Track sequence number (0-length of track-1)" ;
-;   index:units = "1" ;
-;   index:long_name = "index" ;
+;    int FIRST_PT(tracks) ;
+;        FIRST_PT:description = "Index to first point of this track number" ;
+;        FIRST_PT:units = "1" ;
+;        FIRST_PT:long_name = "first_pt" ;
+;    int NUM_PTS(tracks) ;
+;        NUM_PTS:description = "Number of points for this track (6 hour intervals)" ;
+;        NUM_PTS:units = "1" ;
+;        NUM_PTS:long_name = "num_pts" ;
+;    int TRACK_ID(tracks) ;
+;        TRACK_ID:add_fld_num = 9 ;
+;        TRACK_ID:tot_add_fld_num = 27 ;
+;        TRACK_ID:loc_flags = 1, 1, 1, 1, 1, 1, 1, 1, 1 ;
+;        TRACK_ID:description = "Tropical cyclone track number this year (0-tracks-1)" ;
+;        TRACK_ID:units = "1" ;
+;        TRACK_ID:long_name = "track_id" ;
+;    int index(record) ;
+;        index:description = "Track sequence number (0-length of track-1)" ;
+;        index:units = "1" ;
+;        index:long_name = "index" ;
 
 ibwind_=where(ismissing(ibwind_),-999.,ibwind_)
 ibpres=where(ismissing(ibpres),-9999.,ibpres)
@@ -99,7 +99,7 @@ PHIS=phisfile->PHIS
 
 ;system("echo "+quote+             +quote+" >> "+filename)
 quote = inttochar(34)
-delim=" "
+delim="    "
 filename="./trajectories.txt."+basename
 system("rm -rf "+filename)
 
@@ -110,7 +110,7 @@ do ii = 0,ibstormcount-1
   ;if (toint(ibbasin(ii,0)) .eq. 0 .or. toint(ibbasin(ii,0)) .eq. 12 .or. toint(ibbasin(ii,0)) .eq. 13) then
   ;if (toint(ibbasin(ii,0)) .eq. 0 ) then
     numentries=num(.not.ismissing(iblat(ii,:)) .and. ibflag(ii,:) .eq. 1)
-
+    
     ;if (.not.ismissing(ibname(ii,0))) then
     if (numentries .gt. DURTHRESH .and. sum(ibflag(ii,:)) .gt. 0) then
 
@@ -170,7 +170,7 @@ do ii = 0,ibstormcount-1
             thisLat=-999
             thisLon=-999
           end if
-
+          
           ;print(iblat(ii,jj)+" "+iblon(ii,jj))
           if (iblon(ii,jj) .le. max(PHIS&lon) .and. iblon(ii,jj) .ge. min(PHIS&lon)) then
             thisPHIS=tofloat(PHIS({iblat(ii,jj)},{iblon(ii,jj)}))
@@ -180,7 +180,7 @@ do ii = 0,ibstormcount-1
 
           ; There is a potential bug here, where either the calendar converts to missing
           ; or it converts such that the hour is off by one
-
+          
           ; this should be cd_calendar, but we get errors. trying ut_calendar_fix
           thisdate=ut_calendar_fix(ibtime(ii,jj),0)
           if (any(ismissing(thisdate))) then
@@ -210,6 +210,7 @@ do ii = 0,ibstormcount-1
   ;end if
 end do
 end
-
+  
 print("Total errors! "+totalerrors)
-  ;13056  41.470669 -19.662915  9.957811e+04  1.960049e+01  1979  1 16  12
+    ;13056    41.470669    -19.662915    9.957811e+04    1.960049e+01    1979    1    16    12
+
